@@ -1,0 +1,135 @@
+{
+  "theme": "Light",
+  "archetype": "4 (Swiss & High-Contrast)",
+  "design_philosophy": "E1 Anti-AI Design: Optimize for clarity, tension, and functional beauty. No generic SaaS blue or default floating card shadows. Data must be legible, dense, and structured. Color is used strictly for functional signaling and highlighting the AI interactions.",
+  "colors": {
+    "background": "#FFFFFF",
+    "surface": "#F9FAFB",
+    "surface_elevated": "#F3F4F6",
+    "border": "#E5E7EB",
+    "text": {
+      "primary": "#0A0A0A",
+      "secondary": "#52525B",
+      "tertiary": "#A1A1AA",
+      "ai_highlight": "#002FA7"
+    },
+    "brand": {
+      "primary": "#002FA7",
+      "primary_hover": "#00227A",
+      "primary_muted": "rgba(0, 47, 167, 0.08)"
+    },
+    "status": {
+      "success": "#059669",
+      "success_bg": "#D1FAE5",
+      "warning": "#D97706",
+      "warning_bg": "#FEF3C7"
+    }
+  },
+  "typography": {
+    "fonts": {
+      "heading": "Outfit",
+      "body": "Manrope",
+      "mono": "JetBrains Mono"
+    },
+    "setup_instructions": "Install via @expo-google-fonts/outfit, @expo-google-fonts/manrope, and @expo-google-fonts/jetbrains-mono.",
+    "hierarchy": {
+      "h1": { "size": "32px", "weight": "800", "tracking": "-0.04em", "lineHeight": "36px" },
+      "h2": { "size": "24px", "weight": "700", "tracking": "-0.02em", "lineHeight": "28px" },
+      "h3": { "size": "18px", "weight": "600", "tracking": "-0.01em", "lineHeight": "24px" },
+      "body_large": { "size": "16px", "weight": "400", "tracking": "0em", "lineHeight": "24px" },
+      "body": { "size": "14px", "weight": "400", "tracking": "0em", "lineHeight": "20px" },
+      "label": { "size": "12px", "weight": "600", "textTransform": "uppercase", "tracking": "0.1em" },
+      "ai_mono": { "size": "13px", "weight": "500", "tracking": "-0.01em", "fontFamily": "JetBrains Mono", "color": "#002FA7" }
+    }
+  },
+  "spacing_and_layout": {
+    "mobile_strategy": "Adapt the 3-panel desktop layout into a Master-Detail mobile flow with heavy reliance on Stack Navigation and Bottom Sheets.",
+    "panels": {
+      "Contacts_Panel": "Acts as the Home / Master list. Vertical scroll, generous padding (16px - 24px).",
+      "Signals_Panel": "Rendered as a horizontal scrolling section or a distinct block inside the Contact Detail view.",
+      "Flow_AI_Engine_Panel": "A visually distinct highlighted card at the bottom of the Contact screen or an anchored Bottom Sheet to emphasize AI analysis."
+    },
+    "grid_and_spacing": {
+      "container_padding": "16px",
+      "item_gap": "12px",
+      "section_gap": "32px"
+    }
+  },
+  "components": {
+    "Card": {
+      "style": "Swiss Brutalist",
+      "border": "1px solid #E5E7EB",
+      "borderRadius": "8px",
+      "backgroundColor": "#FFFFFF",
+      "shadow": "none",
+      "padding": "16px"
+    },
+    "AI_Opportunity_Card": {
+      "style": "Tracing Beam Edge (React Native adaptation)",
+      "border": "1px solid #002FA7",
+      "borderRadius": "8px",
+      "backgroundColor": "rgba(0, 47, 167, 0.02)",
+      "shadow": "0px 4px 12px rgba(0, 47, 167, 0.1)",
+      "padding": "16px",
+      "note": "Must include 'Powered by Flow AI' footer in JetBrains Mono font."
+    },
+    "Button_Primary": {
+      "backgroundColor": "#002FA7",
+      "color": "#FFFFFF",
+      "borderRadius": "4px",
+      "paddingVertical": "12px",
+      "paddingHorizontal": "24px",
+      "alignItems": "center",
+      "fontWeight": "600"
+    },
+    "Badge": {
+      "borderRadius": "4px",
+      "paddingVertical": "4px",
+      "paddingHorizontal": "8px",
+      "textTransform": "uppercase",
+      "fontSize": "10px",
+      "fontWeight": "700"
+    },
+    "Analyzing_State": {
+      "visuals": "Do not use a generic circular spinner. Use a Skeleton layout with a pulsing opacity effect (opacity 0.4 to 1) and a monospace text feed 'Flow AI Engine scanning...' to mimic terminal processing."
+    },
+    "Modals": {
+      "Add_Signal": "Use a Bottom Sheet modal with a 12px border-top-radius. Dim the background to rgba(0,0,0,0.4). Forms should use flat inputs with a 1px bottom border."
+    }
+  },
+  "motion_and_interactions": {
+    "transitions": "Use React Native Reanimated or standard LayoutAnimation for smooth panel transitions.",
+    "buttons": "Implement a scale-down effect (scale: 0.98) on press (using Pressable) instead of simple opacity changes."
+  },
+  "image_urls": {
+    "contact_avatars": [
+      {
+        "url": "https://images.unsplash.com/photo-1576558656222-ba66febe3dec?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODh8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDB8fHx8MTc3NjAzMTE5N3ww&ixlib=rb-4.1.0&q=85",
+        "category": "Avatar",
+        "description": "Professional male headshot, gray jacket"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1762522926157-bcc04bf0b10a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODh8MHwxfHNlYXJjaHwzfHxwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDB8fHx8MTc3NjAzMTE5N3ww&ixlib=rb-4.1.0&q=85",
+        "category": "Avatar",
+        "description": "Professional male headshot, white shirt"
+      },
+      {
+        "url": "https://images.pexels.com/photos/32721688/pexels-photo-32721688.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "category": "Avatar",
+        "description": "Professional male headshot, bearded, black and white"
+      }
+    ],
+    "empty_state_background": {
+      "url": "https://images.unsplash.com/photo-1770816305998-57eec25ac2d5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDZ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGdlb21ldHJpYyUyMHBhdHRlcm4lMjBtaW5pbWFsJTIwd2hpdGV8ZW58MHx8fHwxNzc2MDcwMjIyfDA&ixlib=rb-4.1.0&q=85",
+      "category": "Background",
+      "description": "White minimal geometric pattern for empty states or AI analysis backgrounds."
+    }
+  },
+  "instructions_to_main_agent": [
+    "This is a React Native Expo application. Adapt all Tailwind terminology provided in these guidelines to equivalent React Native StyleSheet properties or NativeWind classes.",
+    "Do NOT use generic shadows on cards. Stick to the Swiss Brutalist 1px border (#E5E7EB) strategy for clarity.",
+    "Ensure all buttons and interactive elements use a Pressable component with an active opacity or scale-down effect for tactile feedback.",
+    "Implement the AI Analyzing state using a skeletal pulse animation and terminal-like monospace text update, not a default ActivityIndicator.",
+    "Add 'testID' attributes (React Native's equivalent of data-testid) to all interactive elements for robust testing."
+  ]
+}
