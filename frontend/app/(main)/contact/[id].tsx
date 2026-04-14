@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 
@@ -69,7 +70,6 @@ export default function ContactDetailScreen() {
   const [showAddSignal, setShowAddSignal] = useState(false);
   const [analysisComplete, setAnalysisComplete] = useState(false);
   
-  // Animation for analyzing state
   const pulseAnim = useState(new Animated.Value(0.4))[0];
 
   useEffect(() => {
@@ -169,7 +169,7 @@ export default function ContactDetailScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#002FA7" />
+          <ActivityIndicator size="large" color="#00C880" />
         </View>
       </SafeAreaView>
     );
@@ -194,7 +194,7 @@ export default function ContactDetailScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color="#0A0A0A" />
+          <Ionicons name="arrow-back" size={24} color="#343A40" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Contact Details</Text>
         <View style={{ width: 40 }} />
@@ -215,22 +215,22 @@ export default function ContactDetailScreen() {
           
           <View style={styles.contactDetails}>
             <View style={styles.detailRow}>
-              <Ionicons name="business-outline" size={14} color="#52525B" />
+              <Ionicons name="business-outline" size={14} color="#6C757D" />
               <Text style={styles.detailText}>{contact.company}</Text>
             </View>
             <View style={styles.detailRow}>
-              <Ionicons name="location-outline" size={14} color="#52525B" />
+              <Ionicons name="location-outline" size={14} color="#6C757D" />
               <Text style={styles.detailText}>{contact.location}</Text>
             </View>
             {contact.email && (
               <View style={styles.detailRow}>
-                <Ionicons name="mail-outline" size={14} color="#52525B" />
+                <Ionicons name="mail-outline" size={14} color="#6C757D" />
                 <Text style={styles.detailText}>{contact.email}</Text>
               </View>
             )}
             {contact.phone && (
               <View style={styles.detailRow}>
-                <Ionicons name="call-outline" size={14} color="#52525B" />
+                <Ionicons name="call-outline" size={14} color="#6C757D" />
                 <Text style={styles.detailText}>{contact.phone}</Text>
               </View>
             )}
@@ -247,7 +247,7 @@ export default function ContactDetailScreen() {
 
         {/* Signals Section */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
+          <View style={styles.sectionHeaderGreen}>
             <View style={styles.sectionHeaderLeft}>
               <View style={styles.sectionIcon}>
                 <Ionicons name="radio" size={18} color="#FFFFFF" />
@@ -268,7 +268,7 @@ export default function ContactDetailScreen() {
 
           {signals.length === 0 ? (
             <View style={styles.emptySignals}>
-              <Ionicons name="radio-outline" size={32} color="#A1A1AA" />
+              <Ionicons name="radio-outline" size={32} color="#6C757D" />
               <Text style={styles.emptyText}>No signals yet</Text>
               <Text style={styles.emptySubtext}>Add signals to analyze</Text>
             </View>
@@ -277,7 +277,7 @@ export default function ContactDetailScreen() {
               {signals.map((signal) => (
                 <View key={signal.id} style={styles.signalCard}>
                   <View style={styles.signalIconContainer}>
-                    <Ionicons name="radio" size={18} color="#002FA7" />
+                    <Ionicons name="radio" size={18} color="#00C880" />
                   </View>
                   <View style={styles.signalContent}>
                     <View style={styles.signalTitleRow}>
@@ -290,7 +290,7 @@ export default function ContactDetailScreen() {
                     </View>
                     <Text style={styles.signalDescription}>{signal.description}</Text>
                     <View style={styles.signalTime}>
-                      <Ionicons name="time-outline" size={12} color="#A1A1AA" />
+                      <Ionicons name="time-outline" size={12} color="#6C757D" />
                       <Text style={styles.signalTimeText}>{formatTimeAgo(signal.timestamp)}</Text>
                     </View>
                   </View>
@@ -305,14 +305,14 @@ export default function ContactDetailScreen() {
 
         {/* Flow AI Engine Section */}
         <View style={styles.section}>
-          <View style={[styles.sectionHeader, styles.aiSectionHeader]}>
+          <View style={styles.sectionHeaderGreen}>
             <View style={styles.sectionHeaderLeft}>
-              <View style={[styles.sectionIcon, styles.aiIcon]}>
+              <View style={styles.sectionIcon}>
                 <Ionicons name="flash" size={18} color="#FFFFFF" />
               </View>
               <View>
-                <Text style={[styles.sectionTitle, styles.aiTitle]}>Flow AI Engine</Text>
-                <Text style={[styles.sectionSubtitle, styles.aiSubtitle]}>Moment Detection</Text>
+                <Text style={[styles.sectionTitle, styles.italicTitle]}>Flow AI Engine</Text>
+                <Text style={styles.sectionSubtitle}>Moment Detection</Text>
               </View>
             </View>
           </View>
@@ -320,7 +320,7 @@ export default function ContactDetailScreen() {
           {analyzing ? (
             <View style={styles.analyzingContainer}>
               <Animated.View style={[styles.analyzingSpinner, { opacity: pulseAnim }]}>
-                <ActivityIndicator size="large" color="#059669" />
+                <ActivityIndicator size="large" color="#00C880" />
               </Animated.View>
               <Text style={styles.analyzingTitle}>Analyzing Signals</Text>
               <View style={styles.analyzingSteps}>
@@ -336,7 +336,7 @@ export default function ContactDetailScreen() {
                   {opportunities.length} Opportunit{opportunities.length === 1 ? 'y' : 'ies'} Detected
                 </Text>
                 <View style={styles.readyBadge}>
-                  <Ionicons name="checkmark-circle" size={14} color="#059669" />
+                  <Ionicons name="checkmark-circle" size={14} color="#00C880" />
                   <Text style={styles.readyText}>Ready</Text>
                 </View>
               </View>
@@ -346,7 +346,7 @@ export default function ContactDetailScreen() {
                 <View key={index} style={styles.opportunityCard}>
                   <View style={styles.oppHeader}>
                     <View style={styles.oppIconContainer}>
-                      <Ionicons name="trending-up" size={20} color="#059669" />
+                      <Ionicons name="trending-up" size={20} color="#00C880" />
                     </View>
                     <View style={styles.oppTitleContainer}>
                       <Text style={styles.oppTitle}>{opp.title}</Text>
@@ -360,7 +360,7 @@ export default function ContactDetailScreen() {
                   <Text style={styles.oppDescription}>{opp.description}</Text>
                   
                   <View style={styles.partnerRow}>
-                    <Ionicons name="people-outline" size={14} color="#52525B" />
+                    <Ionicons name="people-outline" size={14} color="#6C757D" />
                     <Text style={styles.partnerText}>{opp.partner_name}</Text>
                   </View>
 
@@ -394,7 +394,7 @@ export default function ContactDetailScreen() {
               ))}
 
               <View style={styles.poweredBy}>
-                <Ionicons name="flash" size={14} color="#002FA7" />
+                <Ionicons name="flash" size={14} color="#00C880" />
                 <Text style={styles.poweredByText}>Powered by Flow AI</Text>
               </View>
               <Text style={styles.poweredBySubtext}>
@@ -404,7 +404,7 @@ export default function ContactDetailScreen() {
           ) : signals.length > 0 ? (
             <View style={styles.readyToAnalyze}>
               <View style={styles.readyIcon}>
-                <Ionicons name="flash-outline" size={32} color="#059669" />
+                <Ionicons name="flash-outline" size={32} color="#00C880" />
               </View>
               <Text style={styles.readyTitle}>Ready to Analyze</Text>
               <Text style={styles.readySubtitle}>
@@ -421,7 +421,7 @@ export default function ContactDetailScreen() {
             </View>
           ) : (
             <View style={styles.emptyAI}>
-              <Ionicons name="flash-outline" size={32} color="#A1A1AA" />
+              <Ionicons name="flash-outline" size={32} color="#6C757D" />
               <Text style={styles.emptyAITitle}>Select a contact to begin</Text>
               <Text style={styles.emptyAISubtitle}>
                 Flow will analyze signals and detect opportunities
@@ -449,7 +449,7 @@ export default function ContactDetailScreen() {
                 testID="close-modal-button"
                 onPress={() => setShowAddSignal(false)}
               >
-                <Ionicons name="close" size={24} color="#52525B" />
+                <Ionicons name="close" size={24} color="#6C757D" />
               </TouchableOpacity>
             </View>
             
@@ -461,7 +461,7 @@ export default function ContactDetailScreen() {
                   style={styles.signalTypeCard}
                   onPress={() => addSignal(type.id, type.title)}
                 >
-                  <Ionicons name={type.icon as any} size={24} color="#52525B" />
+                  <Ionicons name={type.icon as any} size={24} color="#6C757D" />
                   <Text style={styles.signalTypeText}>{type.title}</Text>
                 </TouchableOpacity>
               ))}
@@ -476,7 +476,7 @@ export default function ContactDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8F9FA',
   },
   loadingContainer: {
     flex: 1,
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#52525B',
+    color: '#6C757D',
   },
   header: {
     flexDirection: 'row',
@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#0A0A0A',
+    color: '#343A40',
   },
   scrollView: {
     flex: 1,
@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#059669',
+    borderColor: '#00C880',
   },
   contactHeader: {
     flexDirection: 'row',
@@ -527,7 +527,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#FEF3C7',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -541,11 +541,11 @@ const styles = StyleSheet.create({
   contactName: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0A0A0A',
+    color: '#343A40',
   },
   contactRole: {
     fontSize: 14,
-    color: '#52525B',
+    color: '#6C757D',
     marginTop: 2,
   },
   contactDetails: {
@@ -562,12 +562,12 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 13,
-    color: '#52525B',
+    color: '#6C757D',
   },
   signalBadge: {
     marginTop: 16,
     alignSelf: 'flex-start',
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#80FFAD',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 4,
@@ -586,15 +586,12 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     overflow: 'hidden',
   },
-  sectionHeader: {
+  sectionHeaderGreen: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#059669',
-  },
-  aiSectionHeader: {
-    backgroundColor: '#059669',
+    backgroundColor: '#00C880',
   },
   sectionHeaderLeft: {
     flexDirection: 'row',
@@ -609,22 +606,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  aiIcon: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',
   },
-  aiTitle: {
+  italicTitle: {
     fontStyle: 'italic',
   },
   sectionSubtitle: {
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.8)',
-  },
-  aiSubtitle: {
     color: 'rgba(255, 255, 255, 0.8)',
   },
   addButton: {
@@ -642,12 +633,12 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#52525B',
+    color: '#6C757D',
     marginTop: 8,
   },
   emptySubtext: {
     fontSize: 12,
-    color: '#A1A1AA',
+    color: '#6C757D',
     marginTop: 4,
   },
   signalsList: {
@@ -656,7 +647,7 @@ const styles = StyleSheet.create({
   signalCard: {
     flexDirection: 'row',
     padding: 12,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8F9FA',
     borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,
@@ -666,7 +657,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(0, 47, 167, 0.08)',
+    backgroundColor: 'rgba(0, 200, 128, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -682,10 +673,10 @@ const styles = StyleSheet.create({
   signalTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#0A0A0A',
+    color: '#343A40',
   },
   autoBadge: {
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#80FFAD',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
@@ -697,7 +688,7 @@ const styles = StyleSheet.create({
   },
   signalDescription: {
     fontSize: 13,
-    color: '#52525B',
+    color: '#6C757D',
     marginTop: 4,
   },
   signalTime: {
@@ -708,11 +699,11 @@ const styles = StyleSheet.create({
   },
   signalTimeText: {
     fontSize: 11,
-    color: '#A1A1AA',
+    color: '#6C757D',
   },
   signalsCount: {
     fontSize: 12,
-    color: '#52525B',
+    color: '#6C757D',
     marginTop: 8,
     textAlign: 'center',
   },
@@ -726,7 +717,7 @@ const styles = StyleSheet.create({
   analyzingTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0A0A0A',
+    color: '#343A40',
     marginBottom: 16,
   },
   analyzingSteps: {
@@ -734,7 +725,7 @@ const styles = StyleSheet.create({
   },
   analyzingStep: {
     fontSize: 14,
-    color: '#52525B',
+    color: '#6C757D',
     marginBottom: 8,
     fontFamily: 'monospace',
   },
@@ -749,13 +740,13 @@ const styles = StyleSheet.create({
   opportunitiesTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0A0A0A',
+    color: '#343A40',
   },
   readyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#80FFAD',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -767,14 +758,14 @@ const styles = StyleSheet.create({
   },
   opportunitiesSubtitle: {
     fontSize: 13,
-    color: '#52525B',
+    color: '#6C757D',
     marginTop: 4,
     marginBottom: 16,
   },
   opportunityCard: {
-    backgroundColor: 'rgba(0, 47, 167, 0.02)',
+    backgroundColor: 'rgba(0, 200, 128, 0.05)',
     borderWidth: 1,
-    borderColor: '#002FA7',
+    borderColor: '#00C880',
     borderRadius: 8,
     padding: 16,
     marginBottom: 12,
@@ -787,7 +778,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#80FFAD',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -801,12 +792,12 @@ const styles = StyleSheet.create({
   oppTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0A0A0A',
+    color: '#343A40',
     flex: 1,
   },
   matchBadge: {
     alignItems: 'center',
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#80FFAD',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -823,7 +814,7 @@ const styles = StyleSheet.create({
   },
   oppDescription: {
     fontSize: 13,
-    color: '#52525B',
+    color: '#6C757D',
     marginTop: 12,
   },
   partnerRow: {
@@ -834,7 +825,7 @@ const styles = StyleSheet.create({
   },
   partnerText: {
     fontSize: 13,
-    color: '#52525B',
+    color: '#6C757D',
   },
   triggeredBy: {
     flexDirection: 'row',
@@ -844,10 +835,10 @@ const styles = StyleSheet.create({
   },
   triggeredLabel: {
     fontSize: 12,
-    color: '#52525B',
+    color: '#6C757D',
   },
   triggeredBadge: {
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#80FFAD',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
@@ -866,7 +857,7 @@ const styles = StyleSheet.create({
   reasoningTitle: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#52525B',
+    color: '#6C757D',
     marginBottom: 8,
   },
   reasoningItem: {
@@ -874,13 +865,13 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   reasoningBullet: {
-    color: '#059669',
+    color: '#00C880',
     marginRight: 8,
     fontSize: 14,
   },
   reasoningText: {
     fontSize: 13,
-    color: '#52525B',
+    color: '#6C757D',
     flex: 1,
   },
   introduceButton: {
@@ -888,7 +879,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#059669',
+    backgroundColor: '#00C880',
     paddingVertical: 12,
     borderRadius: 8,
     marginTop: 16,
@@ -911,11 +902,11 @@ const styles = StyleSheet.create({
   poweredByText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#002FA7',
+    color: '#00C880',
   },
   poweredBySubtext: {
     fontSize: 12,
-    color: '#52525B',
+    color: '#6C757D',
     textAlign: 'center',
     marginTop: 4,
   },
@@ -927,7 +918,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#80FFAD',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -935,12 +926,12 @@ const styles = StyleSheet.create({
   readyTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0A0A0A',
+    color: '#343A40',
     marginBottom: 4,
   },
   readySubtitle: {
     fontSize: 13,
-    color: '#52525B',
+    color: '#6C757D',
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -948,7 +939,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#059669',
+    backgroundColor: '#00C880',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
@@ -965,12 +956,12 @@ const styles = StyleSheet.create({
   emptyAITitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#52525B',
+    color: '#6C757D',
     marginTop: 8,
   },
   emptyAISubtitle: {
     fontSize: 12,
-    color: '#A1A1AA',
+    color: '#6C757D',
     marginTop: 4,
     textAlign: 'center',
   },
@@ -995,7 +986,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0A0A0A',
+    color: '#343A40',
   },
   signalTypesGrid: {
     flexDirection: 'row',
@@ -1005,7 +996,7 @@ const styles = StyleSheet.create({
   signalTypeCard: {
     width: '47%',
     padding: 16,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8F9FA',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#E5E7EB',
@@ -1015,7 +1006,7 @@ const styles = StyleSheet.create({
   signalTypeText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#0A0A0A',
+    color: '#343A40',
     textAlign: 'center',
   },
 });

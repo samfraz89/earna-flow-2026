@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 
@@ -96,16 +97,16 @@ export default function ContactsScreen() {
           <Text style={styles.contactName}>{item.name}</Text>
           <Text style={styles.contactRole}>{item.role}</Text>
         </View>
-        <Ionicons name="chevron-forward" size={20} color="#A1A1AA" />
+        <Ionicons name="chevron-forward" size={20} color="#6C757D" />
       </View>
       
       <View style={styles.contactDetails}>
         <View style={styles.detailRow}>
-          <Ionicons name="business-outline" size={14} color="#52525B" />
+          <Ionicons name="business-outline" size={14} color="#6C757D" />
           <Text style={styles.detailText}>{item.company}</Text>
         </View>
         <View style={styles.detailRow}>
-          <Ionicons name="location-outline" size={14} color="#52525B" />
+          <Ionicons name="location-outline" size={14} color="#6C757D" />
           <Text style={styles.detailText}>{item.location}</Text>
         </View>
       </View>
@@ -123,7 +124,7 @@ export default function ContactsScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <View style={styles.emptyIcon}>
-        <Ionicons name="people-outline" size={48} color="#A1A1AA" />
+        <Ionicons name="people-outline" size={48} color="#6C757D" />
       </View>
       <Text style={styles.emptyTitle}>No contacts yet</Text>
       <Text style={styles.emptySubtitle}>
@@ -153,7 +154,7 @@ export default function ContactsScreen() {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.logoIcon}>
-            <Ionicons name="git-network" size={24} color="#002FA7" />
+            <Ionicons name="git-network" size={24} color="#00C880" />
           </View>
           <View>
             <Text style={styles.headerTitle}>Earna Flow</Text>
@@ -165,12 +166,17 @@ export default function ContactsScreen() {
           style={styles.profileButton}
           onPress={handleLogout}
         >
-          <Ionicons name="log-out-outline" size={22} color="#52525B" />
+          <Ionicons name="log-out-outline" size={22} color="#343A40" />
         </TouchableOpacity>
       </View>
 
-      {/* Panel Header */}
-      <View style={styles.panelHeader}>
+      {/* Panel Header with Gradient */}
+      <LinearGradient
+        colors={['#4200FF', '#8C54FF']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.panelHeader}
+      >
         <View style={styles.panelHeaderIcon}>
           <Ionicons name="people" size={18} color="#FFFFFF" />
         </View>
@@ -178,12 +184,12 @@ export default function ContactsScreen() {
           <Text style={styles.panelTitle}>Contacts</Text>
           <Text style={styles.panelSubtitle}>Select a contact to analyze</Text>
         </View>
-      </View>
+      </LinearGradient>
 
       {/* Contacts List */}
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#002FA7" />
+          <ActivityIndicator size="large" color="#00C880" />
         </View>
       ) : (
         <FlatList
@@ -197,8 +203,8 @@ export default function ContactsScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={['#002FA7']}
-              tintColor="#002FA7"
+              colors={['#00C880']}
+              tintColor="#00C880"
             />
           }
           showsVerticalScrollIndicator={false}
@@ -211,7 +217,7 @@ export default function ContactsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8F9FA',
   },
   header: {
     flexDirection: 'row',
@@ -232,18 +238,18 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: 'rgba(0, 47, 167, 0.08)',
+    backgroundColor: 'rgba(0, 200, 128, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0A0A0A',
+    color: '#343A40',
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#52525B',
+    color: '#6C757D',
   },
   profileButton: {
     width: 40,
@@ -259,7 +265,6 @@ const styles = StyleSheet.create({
     gap: 12,
     margin: 16,
     padding: 16,
-    backgroundColor: '#002FA7',
     borderRadius: 12,
   },
   panelHeaderIcon: {
@@ -304,7 +309,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#FEF3C7',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -318,11 +323,11 @@ const styles = StyleSheet.create({
   contactName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0A0A0A',
+    color: '#343A40',
   },
   contactRole: {
     fontSize: 14,
-    color: '#52525B',
+    color: '#6C757D',
     marginTop: 2,
   },
   contactDetails: {
@@ -339,12 +344,12 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 13,
-    color: '#52525B',
+    color: '#6C757D',
   },
   signalBadge: {
     marginTop: 12,
     alignSelf: 'flex-start',
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#80FFAD',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 4,
@@ -373,12 +378,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#0A0A0A',
+    color: '#343A40',
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#52525B',
+    color: '#6C757D',
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -386,7 +391,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#002FA7',
+    backgroundColor: '#00C880',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,

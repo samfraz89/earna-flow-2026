@@ -447,7 +447,7 @@ async def seed_demo_data(request: Request):
     if existing:
         return {"message": "Demo data already exists"}
     
-    # Create demo contacts
+    # Create demo contacts with exact emojis from Figma design
     demo_contacts = [
         {
             "id": str(uuid.uuid4()),
@@ -457,7 +457,7 @@ async def seed_demo_data(request: Request):
             "location": "Auckland, NZ",
             "email": "sarah@premierproperties.co.nz",
             "phone": "+64 21 123 4567",
-            "avatar_emoji": "👩",
+            "avatar_emoji": "👩‍💼",
             "auto_signals_count": 3,
             "created_at": datetime.now(timezone.utc),
             "user_id": user_id
@@ -470,7 +470,7 @@ async def seed_demo_data(request: Request):
             "location": "Wellington, NZ",
             "email": "james@financefirst.co.nz",
             "phone": "+64 21 234 5678",
-            "avatar_emoji": "👨",
+            "avatar_emoji": "👨‍💻",
             "auto_signals_count": 2,
             "created_at": datetime.now(timezone.utc),
             "user_id": user_id
@@ -483,8 +483,8 @@ async def seed_demo_data(request: Request):
             "location": "Christchurch, NZ",
             "email": "emma@numberspro.co.nz",
             "phone": "+64 21 345 6789",
-            "avatar_emoji": "👩",
-            "auto_signals_count": 0,
+            "avatar_emoji": "👩‍💼",
+            "auto_signals_count": 2,
             "created_at": datetime.now(timezone.utc),
             "user_id": user_id
         }
