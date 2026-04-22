@@ -8,6 +8,13 @@ import {
   RefreshControl,
   ActivityIndicator,
   Image,
+  Modal,
+  Pressable,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -42,6 +49,16 @@ export default function ContactsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [seeding, setSeeding] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    name: '',
+    role: '',
+    company: '',
+    location: '',
+    email: '',
+    phone: '',
+  });
   const { user, logout, token } = useAuth();
   const router = useRouter();
 
@@ -87,6 +104,42 @@ export default function ContactsScreen() {
   const handleLogout = async () => {
     await logout();
     router.replace('/(auth)/login');
+  };
+
+  const resetForm = () => {
+    setForm({ name: '', role: '', company: '', location: '', email: '', phone: '' });
+  };
+
+  const handleAddContact = async () => {
+    if (!form.name.trim() || !form.role.trim() || !form.company.trim() || !form.location.trim()) {
+      Alert.alert('Missing fields', 'Please fill in Name, Role, Company and Location.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const storedToken = await AsyncStorage.getItem('access_token');
+      await axios.post(
+        `${API_URL}/api/contacts`,
+        {
+          name: form.name.trim(),
+          role: form.role.trim(),
+          company: form.company.trim(),
+          location: form.location.trim(),
+          email: form.email.trim() || null,
+          phone: form.phone.trim() || null,
+          avatar_emoji: '👤',
+        },
+        { headers: { Authorization: `Bearer ${storedToken}` } }
+      );
+      resetForm();
+      setShowAddModal(false);
+      fetchContacts();
+    } catch (error: any) {
+      console.log('Error adding contact:', error);
+      Alert.alert('Error', 'Failed to add contact. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const renderContact = ({ item }: { item: Contact }) => {
@@ -199,7 +252,7 @@ export default function ContactsScreen() {
         <TouchableOpacity
           testID="add-contact-button"
           style={styles.addContactButton}
-          onPress={() => {/* TODO: Add contact modal */}}
+          onPress={() => setShowAddModal(true)}
         >
           <Ionicons name="add" size={24} color="#FFFFFF" />
         </TouchableOpacity>
@@ -229,6 +282,134 @@ export default function ContactsScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      {/* Add Contact Modal */}
+      <Modal
+        visible={showAddModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowAddModal(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.modalOverlay}
+        >
+          <Pressable style={styles.modalBackdrop} onPress={() => setShowAddModal(false)} />
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add Contact</Text>
+              <TouchableOpacity
+                testID="close-add-contact-modal"
+                style={styles.modalCloseButton}
+                onPress={() => setShowAddModal(false)}
+              >
+                <Ionicons name="close" size={22} color="#6C757D" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={styles.modalScroll}
+              contentContainerStyle={styles.modalScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Full Name *</Text>
+                <TextInput
+                  testID="input-name"
+                  style={styles.input}
+                  placeholder="e.g., Jane Doe"
+                  placeholderTextColor="#ADB5BD"
+                  value={form.name}
+                  onChangeText={(v) => setForm({ ...form, name: v })}
+                  autoCapitalize="words"
+                />
+              </View>
+
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Role *</Text>
+                <TextInput
+                  testID="input-role"
+                  style={styles.input}
+                  placeholder="e.g., Real Estate Agent"
+                  placeholderTextColor="#ADB5BD"
+                  value={form.role}
+                  onChangeText={(v) => setForm({ ...form, role: v })}
+                />
+              </View>
+
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Company *</Text>
+                <TextInput
+                  testID="input-company"
+                  style={styles.input}
+                  placeholder="e.g., Premier Properties"
+                  placeholderTextColor="#ADB5BD"
+                  value={form.company}
+                  onChangeText={(v) => setForm({ ...form, company: v })}
+                />
+              </View>
+
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Location *</Text>
+                <TextInput
+                  testID="input-location"
+                  style={styles.input}
+                  placeholder="e.g., Auckland, NZ"
+                  placeholderTextColor="#ADB5BD"
+                  value={form.location}
+                  onChangeText={(v) => setForm({ ...form, location: v })}
+                />
+              </View>
+
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Email</Text>
+                <TextInput
+                  testID="input-email"
+                  style={styles.input}
+                  placeholder="e.g., jane@example.com"
+                  placeholderTextColor="#ADB5BD"
+                  value={form.email}
+                  onChangeText={(v) => setForm({ ...form, email: v })}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </View>
+
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Phone</Text>
+                <TextInput
+                  testID="input-phone"
+                  style={styles.input}
+                  placeholder="e.g., +64 21 123 4567"
+                  placeholderTextColor="#ADB5BD"
+                  value={form.phone}
+                  onChangeText={(v) => setForm({ ...form, phone: v })}
+                  keyboardType="phone-pad"
+                />
+              </View>
+
+              <TouchableOpacity
+                testID="submit-add-contact"
+                style={[styles.submitButton, saving && { opacity: 0.7 }]}
+                onPress={handleAddContact}
+                disabled={saving}
+                activeOpacity={0.85}
+              >
+                {saving ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="person-add" size={18} color="#FFFFFF" />
+                    <Text style={styles.submitButtonText}>Add Contact</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -445,5 +626,89 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+  },
+  modalSheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 8,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    maxHeight: '90%',
+  },
+  modalHandle: {
+    alignSelf: 'center',
+    width: 44,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#E5E7EB',
+    marginBottom: 12,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#430C3D',
+  },
+  modalCloseButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalScroll: {
+    marginTop: 8,
+  },
+  modalScrollContent: {
+    paddingBottom: 16,
+  },
+  field: {
+    marginBottom: 14,
+  },
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#343A40',
+    marginBottom: 6,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#F8F9FA',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: Platform.OS === 'ios' ? 14 : 10,
+    fontSize: 15,
+    color: '#343A40',
+  },
+  submitButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#FF2ECC',
+    paddingVertical: 14,
+    borderRadius: 10,
+    marginTop: 8,
+  },
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
