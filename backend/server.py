@@ -342,19 +342,19 @@ Recent Signals:
 Based on these signals, identify 1-2 referral opportunities. For each opportunity:
 1. Suggest a partner type (e.g., Mortgage Broker, Insurance Adviser, Accountant, Real Estate Agent)
 2. Provide a match percentage (75-95%)
-3. Give a brief description of why this is a good match
-4. List 3-4 bullet points of AI reasoning
+3. Give a brief description (1 sentence max)
+4. List 2-3 SHORT bullet points of AI reasoning (5-8 words each)
 
 Respond in this exact JSON format:
 {{
   "opportunities": [
     {{
       "title": "Opportunity Title",
-      "description": "Brief description",
+      "description": "Brief one-sentence description",
       "match_percentage": 92,
       "partner_name": "Partner Company Name",
       "triggered_by": "Signal that triggered this",
-      "ai_reasoning": ["Reason 1", "Reason 2", "Reason 3"]
+      "ai_reasoning": ["Short reason 1", "Short reason 2"]
     }}
   ]
 }}
