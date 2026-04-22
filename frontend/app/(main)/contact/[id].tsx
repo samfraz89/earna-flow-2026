@@ -346,9 +346,6 @@ export default function ContactDetailScreen() {
                 <Text style={styles.opportunitiesTitle}>
                   {opportunities.length} Opportunit{opportunities.length === 1 ? 'y' : 'ies'} Detected
                 </Text>
-                <View style={styles.readyBadge}>
-                  <Text style={styles.readyText}>Ready</Text>
-                </View>
               </View>
               <Text style={styles.opportunitiesSubtitle}>AI-powered referral recommendations</Text>
 
@@ -853,25 +850,27 @@ const styles = StyleSheet.create({
     color: '#6C757D',
   },
   triggeredBy: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
     marginTop: 12,
   },
   triggeredLabel: {
     fontSize: 12,
     color: '#6C757D',
+    marginBottom: 6,
   },
   triggeredBadge: {
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
     backgroundColor: '#00D664',
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 4,
     borderRadius: 4,
   },
   triggeredText: {
     fontSize: 12,
     fontWeight: '600',
     color: '#FFFFFF',
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   reasoningContainer: {
     marginTop: 12,
