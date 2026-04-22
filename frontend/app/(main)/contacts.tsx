@@ -68,6 +68,7 @@ export default function ContactsScreen() {
   const [seeding, setSeeding] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [sortMode, setSortMode] = useState<'az' | 'za' | 'signals'>('az');
   const [modalStep, setModalStep] = useState<'choice' | 'phonebook' | 'manual'>('choice');
   const [saving, setSaving] = useState(false);
   const [phonebook, setPhonebook] = useState<PhonebookEntry[]>([]);
@@ -401,18 +402,43 @@ export default function ContactsScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Minimal archived toggle */}
-      <TouchableOpacity
-        testID="show-archived-toggle"
-        style={styles.archivedToggle}
-        onPress={() => setShowArchived((v) => !v)}
-        activeOpacity={0.7}
-      >
-        <View style={[styles.archivedToggleDot, showArchived && styles.archivedToggleDotOn]} />
-        <Text style={[styles.archivedToggleText, showArchived && styles.archivedToggleTextOn]}>
-          {showArchived ? 'Hide archived' : 'Show archived'}
-        </Text>
-      </TouchableOpacity>
+      {/* Minimal toolbar: sort + show archived */}
+      <View style={styles.toolbarRow}>
+        <TouchableOpacity
+          testID="sort-toggle"
+          style={styles.archivedToggle}
+          onPress={() =>
+            setSortMode((m) => (m === 'az' ? 'za' : m === 'za' ? 'signals' : 'az'))
+          }
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name={
+              sortMode === 'az'
+                ? 'arrow-down'
+                : sortMode === 'za'
+                ? 'arrow-up'
+                : 'stats-chart'
+            }
+            size={11}
+            color="#6C757D"
+          />
+          <Text style={styles.archivedToggleText}>
+            Sort: {sortMode === 'az' ? 'A–Z' : sortMode === 'za' ? 'Z–A' : 'Most signals'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          testID="show-archived-toggle"
+          style={styles.archivedToggle}
+          onPress={() => setShowArchived((v) => !v)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.archivedToggleDot, showArchived && styles.archivedToggleDotOn]} />
+          <Text style={[styles.archivedToggleText, showArchived && styles.archivedToggleTextOn]}>
+            {showArchived ? 'Hide archived' : 'Show archived'}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Contacts List */}
       {loading ? (
@@ -422,7 +448,13 @@ export default function ContactsScreen() {
       ) : (
         <FlatList
           testID="contacts-list"
-          data={contacts}
+          data={[...contacts].sort((a, b) => {
+            if (sortMode === 'signals') {
+              return (b.auto_signals_count || 0) - (a.auto_signals_count || 0);
+            }
+            const cmp = a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+            return sortMode === 'az' ? cmp : -cmp;
+          })}
           renderItem={renderContact}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
@@ -1168,9 +1200,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    alignSelf: 'flex-end',
-    paddingHorizontal: 20,
+    paddingHorizontal: 8,
     paddingVertical: 6,
+  },
+  toolbarRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 2,
+    gap: 6,
   },
   archivedToggleDot: {
     width: 8,
