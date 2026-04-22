@@ -607,7 +607,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    paddingLeft: 28,
+    paddingRight: 16,
+    paddingVertical: 16,
     backgroundColor: '#00D664',
   },
   sectionHeaderLeft: {
