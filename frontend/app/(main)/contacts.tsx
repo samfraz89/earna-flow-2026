@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,9 +15,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
+
+// Stock headshot images for contacts
+const AVATAR_IMAGES: { [key: string]: string } = {
+  'Sarah Mitchell': 'https://images.unsplash.com/photo-1655249481446-25d575f1c054?w=200&h=200&fit=crop&crop=face',
+  'James Chen': 'https://images.unsplash.com/photo-1576558656222-ba66febe3dec?w=200&h=200&fit=crop&crop=face',
+  'Emma Rodriguez': 'https://images.unsplash.com/photo-1689600944138-da3b150d9cb8?w=200&h=200&fit=crop&crop=face',
+};
 
 interface Contact {
   id: string;
@@ -82,44 +89,52 @@ export default function ContactsScreen() {
     router.replace('/(auth)/login');
   };
 
-  const renderContact = ({ item }: { item: Contact }) => (
-    <TouchableOpacity
-      testID={`contact-card-${item.id}`}
-      style={styles.contactCard}
-      onPress={() => router.push(`/(main)/contact/${item.id}`)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.contactHeader}>
-        <View style={styles.avatarContainer}>
-          <Text style={styles.avatarEmoji}>{item.avatar_emoji}</Text>
+  const renderContact = ({ item }: { item: Contact }) => {
+    const avatarUrl = AVATAR_IMAGES[item.name];
+    
+    return (
+      <TouchableOpacity
+        testID={`contact-card-${item.id}`}
+        style={styles.contactCard}
+        onPress={() => router.push(`/(main)/contact/${item.id}`)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.contactHeader}>
+          <View style={styles.avatarContainer}>
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+            ) : (
+              <Ionicons name="person" size={24} color="#6C757D" />
+            )}
+          </View>
+          <View style={styles.contactInfo}>
+            <Text style={styles.contactName}>{item.name}</Text>
+            <Text style={styles.contactRole}>{item.role}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#6C757D" />
         </View>
-        <View style={styles.contactInfo}>
-          <Text style={styles.contactName}>{item.name}</Text>
-          <Text style={styles.contactRole}>{item.role}</Text>
+        
+        <View style={styles.contactDetails}>
+          <View style={styles.detailRow}>
+            <Ionicons name="business-outline" size={14} color="#6C757D" />
+            <Text style={styles.detailText}>{item.company}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Ionicons name="location-outline" size={14} color="#6C757D" />
+            <Text style={styles.detailText}>{item.location}</Text>
+          </View>
         </View>
-        <Ionicons name="chevron-forward" size={20} color="#6C757D" />
-      </View>
-      
-      <View style={styles.contactDetails}>
-        <View style={styles.detailRow}>
-          <Ionicons name="business-outline" size={14} color="#6C757D" />
-          <Text style={styles.detailText}>{item.company}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Ionicons name="location-outline" size={14} color="#6C757D" />
-          <Text style={styles.detailText}>{item.location}</Text>
-        </View>
-      </View>
 
-      {item.auto_signals_count > 0 && (
-        <View style={styles.signalBadge}>
-          <Text style={styles.signalBadgeText}>
-            {item.auto_signals_count} auto signals detected
-          </Text>
-        </View>
-      )}
-    </TouchableOpacity>
-  );
+        {item.auto_signals_count > 0 && (
+          <View style={styles.signalBadge}>
+            <Text style={styles.signalBadgeText}>
+              {item.auto_signals_count} auto signals detected
+            </Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
@@ -327,10 +342,16 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
   avatarEmoji: {
     fontSize: 24,
@@ -367,7 +388,7 @@ const styles = StyleSheet.create({
   signalBadge: {
     marginTop: 12,
     alignSelf: 'flex-start',
-    backgroundColor: '#F8D7F0',
+    backgroundColor: '#00D664',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 4,
@@ -375,7 +396,7 @@ const styles = StyleSheet.create({
   signalBadgeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#950574',
+    color: '#FFFFFF',
   },
   emptyState: {
     flex: 1,
