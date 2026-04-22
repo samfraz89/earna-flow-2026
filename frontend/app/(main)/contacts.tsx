@@ -378,9 +378,9 @@ export default function ContactsScreen() {
         <TouchableOpacity
           testID="profile-button"
           style={styles.profileButton}
-          onPress={handleLogout}
+          onPress={() => router.push('/(main)/profile')}
         >
-          <Ionicons name="log-out-outline" size={22} color="#343A40" />
+          <Ionicons name="person-circle-outline" size={26} color="#343A40" />
         </TouchableOpacity>
       </View>
 
