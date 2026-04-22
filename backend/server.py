@@ -256,10 +256,12 @@ async def logout(response: Response):
 # ============= CONTACTS ENDPOINTS =============
 
 @api_router.get("/contacts")
-async def get_contacts(request: Request, include_archived: bool = False):
+async def get_contacts(request: Request, include_archived: bool = False, only_archived: bool = False):
     user = await get_current_user(request)
     query = {"user_id": user["id"]}
-    if not include_archived:
+    if only_archived:
+        query["is_archived"] = True
+    elif not include_archived:
         query["is_archived"] = {"$ne": True}
     contacts = await db.contacts.find(query, {"_id": 0}).to_list(1000)
     return contacts

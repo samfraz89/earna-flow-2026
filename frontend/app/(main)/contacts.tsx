@@ -88,10 +88,14 @@ export default function ContactsScreen() {
   const fetchContacts = useCallback(async () => {
     try {
       const storedToken = await AsyncStorage.getItem('access_token');
-      const response = await axios.get(
-        `${API_URL}/api/contacts?include_archived=${showArchived ? 'true' : 'false'}`,
-        { headers: { Authorization: `Bearer ${storedToken}` } }
-      );
+      // When "Show archived" is ON -> show ONLY archived contacts
+      // When OFF -> show only active (non-archived) contacts
+      const url = showArchived
+        ? `${API_URL}/api/contacts?only_archived=true`
+        : `${API_URL}/api/contacts?include_archived=false`;
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${storedToken}` },
+      });
       setContacts(response.data);
     } catch (error) {
       console.log('Error fetching contacts:', error);
@@ -238,16 +242,9 @@ export default function ContactsScreen() {
   const handleToggleArchive = async (contactId: string, currentlyArchived: boolean) => {
     const targetArchived = !currentlyArchived;
     const previous = contacts;
-    // Optimistic UI update
-    if (!showArchived) {
-      // Archived contacts are hidden — remove immediately after archiving
-      setContacts((prev) => prev.filter((c) => c.id !== contactId));
-    } else {
-      // Toggle is_archived in-place
-      setContacts((prev) =>
-        prev.map((c) => (c.id === contactId ? { ...c, is_archived: targetArchived } : c))
-      );
-    }
+    // Optimistic UI: in either mode, the contact should disappear after toggle
+    // (show-archived ON => unarchiving removes it; show-archived OFF => archiving removes it)
+    setContacts((prev) => prev.filter((c) => c.id !== contactId));
     try {
       const storedToken = await AsyncStorage.getItem('access_token');
       await axios.patch(
@@ -255,7 +252,7 @@ export default function ContactsScreen() {
         { is_archived: targetArchived },
         { headers: { Authorization: `Bearer ${storedToken}` } }
       );
-      // Re-fetch to guarantee we're in sync with backend (honours showArchived flag)
+      // Sync with backend after
       fetchContacts();
     } catch (error) {
       console.log('Error toggling archive:', error);
