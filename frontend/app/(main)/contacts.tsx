@@ -15,6 +15,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,6 +26,8 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const SHEET_HEIGHT = Math.min(SCREEN_HEIGHT * 0.85, 720);
 
 // Stock headshot images for contacts - close-up face shots
 const AVATAR_IMAGES: { [key: string]: string } = {
@@ -926,7 +929,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingHorizontal: 20,
     paddingBottom: 16,
-    maxHeight: '90%',
+    height: SHEET_HEIGHT,
   },
   modalHandle: {
     alignSelf: 'center',
@@ -1005,7 +1008,6 @@ const styles = StyleSheet.create({
   },
   phonebookWrapper: {
     flex: 1,
-    minHeight: 420,
     paddingBottom: 8,
   },
   phonebookLoader: {
@@ -1023,7 +1025,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   phonebookList: {
-    maxHeight: 460,
+    flex: 1,
   },
   phonebookRow: {
     flexDirection: 'row',
