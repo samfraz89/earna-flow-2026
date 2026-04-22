@@ -78,6 +78,7 @@ class Contact(BaseModel):
     avatar_emoji: str = "👤"
     avatar_url: Optional[str] = None
     auto_signals_count: int = 0
+    is_archived: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     user_id: str
 
@@ -252,9 +253,12 @@ async def logout(response: Response):
 # ============= CONTACTS ENDPOINTS =============
 
 @api_router.get("/contacts")
-async def get_contacts(request: Request):
+async def get_contacts(request: Request, include_archived: bool = False):
     user = await get_current_user(request)
-    contacts = await db.contacts.find({"user_id": user["id"]}, {"_id": 0}).to_list(1000)
+    query = {"user_id": user["id"]}
+    if not include_archived:
+        query["is_archived"] = {"$ne": True}
+    contacts = await db.contacts.find(query, {"_id": 0}).to_list(1000)
     return contacts
 
 @api_router.post("/contacts")
@@ -266,6 +270,19 @@ async def create_contact(contact_data: ContactCreate, request: Request):
     )
     await db.contacts.insert_one(contact.dict())
     return contact.dict()
+
+
+@api_router.patch("/contacts/{contact_id}/archive")
+async def set_contact_archive(contact_id: str, payload: dict, request: Request):
+    user = await get_current_user(request)
+    is_archived = bool(payload.get("is_archived", True))
+    result = await db.contacts.update_one(
+        {"id": contact_id, "user_id": user["id"]},
+        {"$set": {"is_archived": is_archived}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Contact not found")
+    return {"status": "ok", "contact_id": contact_id, "is_archived": is_archived}
 
 # ============= PHONEBOOK (DEMO) =============
 

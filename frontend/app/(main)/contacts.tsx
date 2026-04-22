@@ -19,6 +19,7 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { Swipeable } from 'react-native-gesture-handler';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -43,6 +44,7 @@ interface Contact {
   avatar_emoji: string;
   avatar_url?: string | null;
   auto_signals_count: number;
+  is_archived?: boolean;
 }
 
 interface PhonebookEntry {
@@ -62,6 +64,7 @@ export default function ContactsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [modalStep, setModalStep] = useState<'choice' | 'phonebook' | 'manual'>('choice');
   const [saving, setSaving] = useState(false);
   const [phonebook, setPhonebook] = useState<PhonebookEntry[]>([]);
@@ -81,9 +84,10 @@ export default function ContactsScreen() {
   const fetchContacts = useCallback(async () => {
     try {
       const storedToken = await AsyncStorage.getItem('access_token');
-      const response = await axios.get(`${API_URL}/api/contacts`, {
-        headers: { Authorization: `Bearer ${storedToken}` }
-      });
+      const response = await axios.get(
+        `${API_URL}/api/contacts?include_archived=${showArchived ? 'true' : 'false'}`,
+        { headers: { Authorization: `Bearer ${storedToken}` } }
+      );
       setContacts(response.data);
     } catch (error) {
       console.log('Error fetching contacts:', error);
@@ -91,7 +95,7 @@ export default function ContactsScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [showArchived]);
 
   useEffect(() => {
     fetchContacts();
@@ -227,50 +231,101 @@ export default function ContactsScreen() {
     }
   };
 
+  const handleToggleArchive = async (contactId: string, currentlyArchived: boolean) => {
+    const targetArchived = !currentlyArchived;
+    const previous = contacts;
+    // Optimistic UI update
+    if (!showArchived) {
+      // Archived contacts are hidden — remove immediately after archiving
+      setContacts((prev) => prev.filter((c) => c.id !== contactId));
+    } else {
+      // Toggle is_archived in-place
+      setContacts((prev) =>
+        prev.map((c) => (c.id === contactId ? { ...c, is_archived: targetArchived } : c))
+      );
+    }
+    try {
+      const storedToken = await AsyncStorage.getItem('access_token');
+      await axios.patch(
+        `${API_URL}/api/contacts/${contactId}/archive`,
+        { is_archived: targetArchived },
+        { headers: { Authorization: `Bearer ${storedToken}` } }
+      );
+    } catch (error) {
+      console.log('Error toggling archive:', error);
+      setContacts(previous);
+      Alert.alert('Error', 'Could not update archive state.');
+    }
+  };
+
   const renderContact = ({ item }: { item: Contact }) => {
     const avatarUrl = item.avatar_url || AVATAR_IMAGES[item.name];
-    
-    return (
-      <TouchableOpacity
-        testID={`contact-card-${item.id}`}
-        style={styles.contactCard}
-        onPress={() => router.push(`/(main)/contact/${item.id}`)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.contactHeader}>
-          <View style={styles.avatarContainer}>
-            {avatarUrl ? (
-              <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
-            ) : (
-              <Ionicons name="person" size={24} color="#6C757D" />
-            )}
-          </View>
-          <View style={styles.contactInfo}>
-            <Text style={styles.contactName}>{item.name}</Text>
-            <Text style={styles.contactRole}>{item.role}</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color="#6C757D" />
-        </View>
-        
-        <View style={styles.contactDetails}>
-          <View style={styles.detailRow}>
-            <Ionicons name="business-outline" size={14} color="#6C757D" />
-            <Text style={styles.detailText}>{item.company}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Ionicons name="location-outline" size={14} color="#6C757D" />
-            <Text style={styles.detailText}>{item.location}</Text>
-          </View>
-        </View>
+    const archived = !!item.is_archived;
 
-        {item.auto_signals_count > 0 && (
-          <View style={styles.signalBadge}>
-            <Text style={styles.signalBadgeText}>
-              {item.auto_signals_count} auto signals detected
-            </Text>
-          </View>
+    return (
+      <Swipeable
+        renderRightActions={() => (
+          <TouchableOpacity
+            testID={`archive-contact-${item.id}`}
+            style={[styles.swipeArchiveAction, archived && { backgroundColor: '#00D664' }]}
+            onPress={() => handleToggleArchive(item.id, archived)}
+            activeOpacity={0.85}
+          >
+            <Ionicons name={archived ? 'arrow-undo' : 'archive'} size={20} color="#FFFFFF" />
+            <Text style={styles.swipeArchiveText}>{archived ? 'Restore' : 'Archive'}</Text>
+          </TouchableOpacity>
         )}
-      </TouchableOpacity>
+        overshootRight={false}
+        rightThreshold={40}
+      >
+        <TouchableOpacity
+          testID={`contact-card-${item.id}`}
+          style={[styles.contactCard, archived && styles.contactCardArchived]}
+          onPress={() => router.push(`/(main)/contact/${item.id}`)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.contactHeader}>
+            <View style={styles.avatarContainer}>
+              {avatarUrl ? (
+                <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+              ) : (
+                <Ionicons name="person" size={24} color="#6C757D" />
+              )}
+            </View>
+            <View style={styles.contactInfo}>
+              <View style={styles.contactNameRow}>
+                <Text style={styles.contactName}>{item.name}</Text>
+                {archived && (
+                  <View style={styles.archivedPill}>
+                    <Text style={styles.archivedPillText}>Archived</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={styles.contactRole}>{item.role}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#6C757D" />
+          </View>
+
+          <View style={styles.contactDetails}>
+            <View style={styles.detailRow}>
+              <Ionicons name="business-outline" size={14} color="#6C757D" />
+              <Text style={styles.detailText}>{item.company}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Ionicons name="location-outline" size={14} color="#6C757D" />
+              <Text style={styles.detailText}>{item.location}</Text>
+            </View>
+          </View>
+
+          {item.auto_signals_count > 0 && (
+            <View style={styles.signalBadge}>
+              <Text style={styles.signalBadgeText}>
+                {item.auto_signals_count} auto signals detected
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </Swipeable>
     );
   };
 
@@ -342,6 +397,19 @@ export default function ContactsScreen() {
           <Ionicons name="add" size={24} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
+
+      {/* Minimal archived toggle */}
+      <TouchableOpacity
+        testID="show-archived-toggle"
+        style={styles.archivedToggle}
+        onPress={() => setShowArchived((v) => !v)}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.archivedToggleDot, showArchived && styles.archivedToggleDotOn]} />
+        <Text style={[styles.archivedToggleText, showArchived && styles.archivedToggleTextOn]}>
+          {showArchived ? 'Hide archived' : 'Show archived'}
+        </Text>
+      </TouchableOpacity>
 
       {/* Contacts List */}
       {loading ? (
@@ -1056,5 +1124,68 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
+  },
+  swipeArchiveAction: {
+    backgroundColor: '#6C757D',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 84,
+    marginVertical: 6,
+    marginLeft: 8,
+    borderRadius: 12,
+    gap: 4,
+  },
+  swipeArchiveText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  contactCardArchived: {
+    opacity: 0.55,
+  },
+  contactNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  archivedPill: {
+    backgroundColor: '#E5E7EB',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  archivedPillText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#6C757D',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  archivedToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-end',
+    paddingHorizontal: 20,
+    paddingVertical: 6,
+  },
+  archivedToggleDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#CED4DA',
+  },
+  archivedToggleDotOn: {
+    backgroundColor: '#00D664',
+  },
+  archivedToggleText: {
+    fontSize: 11,
+    color: '#6C757D',
+    fontWeight: '500',
+  },
+  archivedToggleTextOn: {
+    color: '#430C3D',
+    fontWeight: '600',
   },
 });
