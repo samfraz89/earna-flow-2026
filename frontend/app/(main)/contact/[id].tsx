@@ -347,7 +347,6 @@ export default function ContactDetailScreen() {
                   {opportunities.length} Opportunit{opportunities.length === 1 ? 'y' : 'ies'} Detected
                 </Text>
                 <View style={styles.readyBadge}>
-                  <Ionicons name="checkmark-circle" size={14} color="#00D664" />
                   <Text style={styles.readyText}>Ready</Text>
                 </View>
               </View>
@@ -357,7 +356,7 @@ export default function ContactDetailScreen() {
                 <View key={index} style={styles.opportunityCard}>
                   <View style={styles.oppHeader}>
                     <View style={styles.oppIconContainer}>
-                      <Ionicons name="trending-up" size={20} color="#00D664" />
+                      <Ionicons name="trending-up" size={18} color="#FFFFFF" />
                     </View>
                     <View style={styles.oppTitleContainer}>
                       <Text style={styles.oppTitle}>{opp.title}</Text>
@@ -771,11 +770,10 @@ const styles = StyleSheet.create({
     color: '#343A40',
   },
   readyBadge: {
-    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 4,
     backgroundColor: '#00D664',
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 4,
   },
@@ -783,6 +781,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#FFFFFF',
+    textAlign: 'center',
   },
   opportunitiesSubtitle: {
     fontSize: 13,
@@ -793,7 +792,7 @@ const styles = StyleSheet.create({
   opportunityCard: {
     backgroundColor: 'rgba(0, 214, 100, 0.08)',
     borderWidth: 1,
-    borderColor: '#00D664',
+    borderColor: '#B52EFF',
     borderRadius: 8,
     padding: 16,
     marginBottom: 12,
@@ -803,10 +802,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   oppIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#00D664',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#B52EFF',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
