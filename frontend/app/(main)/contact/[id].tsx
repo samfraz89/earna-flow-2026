@@ -355,9 +355,7 @@ export default function ContactDetailScreen() {
               {opportunities.map((opp, index) => (
                 <View key={index} style={styles.opportunityCard}>
                   <View style={styles.oppHeader}>
-                    <View style={styles.oppIconContainer}>
-                      <Ionicons name="trending-up" size={18} color="#FFFFFF" />
-                    </View>
+                    <View style={styles.oppIconContainer} />
                     <View style={styles.oppTitleContainer}>
                       <Text style={styles.oppTitle}>{opp.title}</Text>
                       <View style={styles.matchBadge}>
@@ -790,7 +788,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   opportunityCard: {
-    backgroundColor: 'rgba(0, 214, 100, 0.08)',
+    backgroundColor: 'rgba(181, 46, 255, 0.06)',
     borderWidth: 1,
     borderColor: '#B52EFF',
     borderRadius: 8,
@@ -802,9 +800,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   oppIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: '#B52EFF',
     justifyContent: 'center',
     alignItems: 'center',
