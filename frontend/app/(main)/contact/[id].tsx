@@ -372,7 +372,7 @@ export default function ContactDetailScreen() {
                   <View style={styles.triggeredBy}>
                     <Text style={styles.triggeredLabel}>Triggered by:</Text>
                     <View style={styles.triggeredBadge}>
-                      <Text style={styles.triggeredText}>{opp.triggered_by}</Text>
+                      <Text style={styles.triggeredText} numberOfLines={1} ellipsizeMode="tail">{opp.triggered_by}</Text>
                     </View>
                   </View>
 

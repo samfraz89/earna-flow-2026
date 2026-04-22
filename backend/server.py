@@ -433,18 +433,18 @@ Only respond with valid JSON, no other text."""
 async def get_opportunities(contact_id: str, request: Request):
     user = await get_current_user(request)
     opportunities = await db.opportunities.find({"contact_id": contact_id, "user_id": user["id"]}, {"_id": 0}).sort("created_at", -1).to_list(100)
-    # Enforce: max 3 reasoning bullets, each max 4 words
+    # Enforce: max 3 reasoning bullets, each max 4 words; triggered_by max 4 words
     import re
+    def _short(text, max_words=4):
+        words = str(text or "").split()
+        phrase = " ".join(words[:max_words])
+        phrase = re.sub(r"[;,:.\-\u2014\u2013]+$", "", phrase).strip()
+        return phrase
     for opp in opportunities:
         reasoning = opp.get("ai_reasoning", []) or []
-        trimmed = []
-        for r in reasoning[:3]:
-            words = str(r).split()
-            phrase = " ".join(words[:4])
-            # Remove trailing punctuation like ; , : . — -
-            phrase = re.sub(r"[;,:.\-\u2014\u2013]+$", "", phrase).strip()
-            trimmed.append(phrase)
+        trimmed = [_short(r) for r in reasoning[:3]]
         opp["ai_reasoning"] = trimmed
+        opp["triggered_by"] = _short(opp.get("triggered_by", ""))
     return opportunities
 
 # ============= SEED DATA ENDPOINT =============
