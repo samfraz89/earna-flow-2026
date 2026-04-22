@@ -95,9 +95,10 @@ class ContactCreate(BaseModel):
 class Signal(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     contact_id: str
-    signal_type: str  # property_listed, meeting_scheduled, high_activity, deal_stage_change, email_engagement, etc.
+    signal_type: str  # category id, e.g. life_event, property_activity, meeting_recorded, deal_activity, vehicle_purchase, business_event
     title: str
     description: str
+    sub_signal: Optional[str] = None  # specific sub-category, e.g. "New baby", "Buying house", "Quote sent"
     is_auto: bool = True
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     user_id: str
@@ -106,6 +107,7 @@ class SignalCreate(BaseModel):
     signal_type: str
     title: str
     description: str
+    sub_signal: Optional[str] = None
     is_auto: bool = False
 
 class Opportunity(BaseModel):
@@ -387,7 +389,13 @@ async def analyze_contact(contact_id: str, request: Request):
         }
     
     # Build context for AI
-    signals_text = "\n".join([f"- {s['title']}: {s['description']} (Type: {s['signal_type']}, Auto: {s['is_auto']})" for s in signals])
+    signals_text = "\n".join([
+        f"- [{s['signal_type']}] {s['title']}"
+        + (f" — Sub-signal: {s['sub_signal']}" if s.get('sub_signal') else "")
+        + f" | Detail: {s.get('description', '')}"
+        + f" (Auto: {s.get('is_auto', False)})"
+        for s in signals
+    ])
     
     prompt = f"""You are an AI relationship intelligence system that detects referral opportunities.
 

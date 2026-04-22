@@ -11,6 +11,7 @@ import {
   Animated,
   Image,
   Alert,
+  TextInput,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -71,6 +72,15 @@ const SIGNAL_TYPES = [
   { id: 'business_event', icon: 'briefcase', title: 'Business Event' },
 ];
 
+const SUB_SIGNALS: Record<string, string[]> = {
+  meeting_recorded: ['Discussed property sale', 'Family planning conversation', 'Business expansion plans'],
+  life_event: ['New baby', 'Marriage', 'Moving house', 'New pet', 'Job change', 'Retirement'],
+  property_activity: ['Buying house', 'Selling property', 'Investment property', 'Refinancing'],
+  deal_activity: ['Deal stage change', 'Quote sent', 'Contract signed'],
+  vehicle_purchase: ['Buying car', 'Trade-in evaluation', 'Finance needed'],
+  business_event: ['New business', 'Expansion', 'Hiring staff', 'New location', 'Need equipment'],
+};
+
 export default function ContactDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -84,6 +94,10 @@ export default function ContactDetailScreen() {
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzeFailed, setAnalyzeFailed] = useState(false);
   const [showAddSignal, setShowAddSignal] = useState(false);
+  const [signalStep, setSignalStep] = useState<'category' | 'sub'>('category');
+  const [selectedCategory, setSelectedCategory] = useState<{ id: string; title: string; icon: string } | null>(null);
+  const [otherSubSignal, setOtherSubSignal] = useState('');
+  const [showOtherInput, setShowOtherInput] = useState(false);
   const [analysisComplete, setAnalysisComplete] = useState(false);
   
   const pulseAnim = useState(new Animated.Value(0.4))[0];
@@ -168,20 +182,37 @@ export default function ContactDetailScreen() {
     }
   };
 
-  const addSignal = async (signalType: string, title: string) => {
+  const closeSignalModal = () => {
+    setShowAddSignal(false);
+    setSignalStep('category');
+    setSelectedCategory(null);
+    setOtherSubSignal('');
+    setShowOtherInput(false);
+  };
+
+  const openSubSignalStep = (cat: { id: string; title: string; icon: string }) => {
+    setSelectedCategory(cat);
+    setOtherSubSignal('');
+    setShowOtherInput(false);
+    setSignalStep('sub');
+  };
+
+  const addSignal = async (signalType: string, category: string, subSignal: string) => {
     try {
       const storedToken = await AsyncStorage.getItem('access_token');
+      const title = `${category}: ${subSignal}`;
       await axios.post(
         `${API_URL}/api/contacts/${id}/signals`,
         {
           signal_type: signalType,
           title: title,
-          description: `Manual ${title.toLowerCase()} signal added`,
+          description: subSignal,
+          sub_signal: subSignal,
           is_auto: false,
         },
         { headers: { Authorization: `Bearer ${storedToken}` } }
       );
-      setShowAddSignal(false);
+      closeSignalModal();
       // Refresh signals then auto-run analysis
       const headers = { Authorization: `Bearer ${storedToken}` };
       const [contactRes, signalsRes] = await Promise.all([
@@ -593,41 +624,128 @@ export default function ContactDetailScreen() {
         )}
       </ScrollView>
 
-      {/* Add Signal Modal */}
+      {/* Add Signal Modal — 2-step: Category → Sub-signal */}
       <Modal
         visible={showAddSignal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowAddSignal(false)}
+        onRequestClose={closeSignalModal}
       >
         <Pressable 
           style={styles.modalOverlay}
-          onPress={() => setShowAddSignal(false)}
+          onPress={closeSignalModal}
         >
           <Pressable style={styles.modalContent} onPress={e => e.stopPropagation()}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Signal</Text>
+              <View style={styles.signalHeaderLeft}>
+                {signalStep === 'sub' && (
+                  <TouchableOpacity
+                    testID="sub-back-button"
+                    style={styles.signalBackBtn}
+                    onPress={() => {
+                      setSignalStep('category');
+                      setShowOtherInput(false);
+                      setOtherSubSignal('');
+                    }}
+                  >
+                    <Ionicons name="chevron-back" size={20} color="#343A40" />
+                  </TouchableOpacity>
+                )}
+                <Text style={styles.modalTitle}>
+                  {signalStep === 'category' ? 'Add Signal' : selectedCategory?.title || ''}
+                </Text>
+              </View>
               <TouchableOpacity
                 testID="close-modal-button"
-                onPress={() => setShowAddSignal(false)}
+                onPress={closeSignalModal}
               >
                 <Ionicons name="close" size={24} color="#6C757D" />
               </TouchableOpacity>
             </View>
-            
-            <View style={styles.signalTypesGrid}>
-              {SIGNAL_TYPES.map((type) => (
-                <TouchableOpacity
-                  key={type.id}
-                  testID={`signal-type-${type.id}`}
-                  style={styles.signalTypeCard}
-                  onPress={() => addSignal(type.id, type.title)}
-                >
-                  <Ionicons name={type.icon as any} size={24} color="#6C757D" />
-                  <Text style={styles.signalTypeText}>{type.title}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+
+            {signalStep === 'category' && (
+              <View style={styles.signalTypesGrid}>
+                {SIGNAL_TYPES.map((type) => (
+                  <TouchableOpacity
+                    key={type.id}
+                    testID={`signal-type-${type.id}`}
+                    style={styles.signalTypeCard}
+                    onPress={() => openSubSignalStep(type)}
+                  >
+                    <Ionicons name={type.icon as any} size={24} color="#6C757D" />
+                    <Text style={styles.signalTypeText}>{type.title}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {signalStep === 'sub' && selectedCategory && (
+              <ScrollView
+                style={styles.subSignalScroll}
+                contentContainerStyle={styles.subSignalList}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+                {(SUB_SIGNALS[selectedCategory.id] || []).map((sub) => (
+                  <TouchableOpacity
+                    key={sub}
+                    testID={`sub-signal-${sub}`}
+                    style={styles.subSignalButton}
+                    activeOpacity={0.85}
+                    onPress={() => addSignal(selectedCategory.id, selectedCategory.title, sub)}
+                  >
+                    <Ionicons name={selectedCategory.icon as any} size={18} color="#00D664" />
+                    <Text style={styles.subSignalText}>{sub}</Text>
+                    <Ionicons name="chevron-forward" size={18} color="#ADB5BD" />
+                  </TouchableOpacity>
+                ))}
+
+                {!showOtherInput ? (
+                  <TouchableOpacity
+                    testID="sub-signal-other"
+                    style={[styles.subSignalButton, { borderStyle: 'dashed' }]}
+                    activeOpacity={0.85}
+                    onPress={() => setShowOtherInput(true)}
+                  >
+                    <Ionicons name="add-circle-outline" size={18} color="#B52EFF" />
+                    <Text style={[styles.subSignalText, { color: '#B52EFF' }]}>Other…</Text>
+                    <Ionicons name="chevron-forward" size={18} color="#ADB5BD" />
+                  </TouchableOpacity>
+                ) : (
+                  <View style={styles.otherInputRow}>
+                    <TextInput
+                      testID="sub-signal-other-input"
+                      style={styles.otherInput}
+                      placeholder="Type your sub-signal…"
+                      placeholderTextColor="#ADB5BD"
+                      value={otherSubSignal}
+                      onChangeText={setOtherSubSignal}
+                      autoFocus
+                      onSubmitEditing={() => {
+                        const v = otherSubSignal.trim();
+                        if (v.length && selectedCategory) {
+                          addSignal(selectedCategory.id, selectedCategory.title, v);
+                        }
+                      }}
+                      returnKeyType="done"
+                    />
+                    <TouchableOpacity
+                      testID="sub-signal-other-save"
+                      style={[styles.otherSaveBtn, !otherSubSignal.trim() && { opacity: 0.5 }]}
+                      disabled={!otherSubSignal.trim()}
+                      onPress={() => {
+                        const v = otherSubSignal.trim();
+                        if (v.length && selectedCategory) {
+                          addSignal(selectedCategory.id, selectedCategory.title, v);
+                        }
+                      }}
+                    >
+                      <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </ScrollView>
+            )}
           </Pressable>
         </Pressable>
       </Modal>
@@ -1204,6 +1322,69 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#343A40',
     textAlign: 'center',
+  },
+  signalHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  signalBackBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  subSignalScroll: {
+    maxHeight: 440,
+  },
+  subSignalList: {
+    gap: 8,
+    paddingVertical: 8,
+  },
+  subSignalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+  },
+  subSignalText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#343A40',
+  },
+  otherInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+  },
+  otherInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#B52EFF',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: '#343A40',
+    backgroundColor: '#FFFFFF',
+  },
+  otherSaveBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#B52EFF',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   historyHeader: {
     flexDirection: 'row',
