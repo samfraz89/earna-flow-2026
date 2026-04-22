@@ -208,7 +208,7 @@ export default function ContactsScreen() {
       {/* Contacts List */}
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#00C880" />
+          <ActivityIndicator size="large" color="#00D664" />
         </View>
       ) : (
         <FlatList
@@ -222,8 +222,8 @@ export default function ContactsScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={['#00C880']}
-              tintColor="#00C880"
+              colors={['#00D664']}
+              tintColor="#00D664"
             />
           }
           showsVerticalScrollIndicator={false}

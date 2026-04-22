@@ -9,15 +9,22 @@ import {
   Modal,
   Pressable,
   Animated,
+  Image,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
+
+// Stock headshot images for contacts - close-up face shots (same as contacts list)
+const AVATAR_IMAGES: { [key: string]: string } = {
+  'Sarah Mitchell': 'https://images.unsplash.com/photo-1609371497456-3a55a205d5eb?w=200&h=200&fit=crop&crop=face',
+  'James Chen': 'https://images.unsplash.com/photo-1633625510483-c177f4308f33?w=200&h=200&fit=crop&crop=face',
+  'Emma Rodriguez': 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop&crop=face',
+};
 
 interface Contact {
   id: string;
@@ -169,7 +176,7 @@ export default function ContactDetailScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#00C880" />
+          <ActivityIndicator size="large" color="#00D664" />
         </View>
       </SafeAreaView>
     );
@@ -205,7 +212,11 @@ export default function ContactDetailScreen() {
         <View style={styles.contactCard}>
           <View style={styles.contactHeader}>
             <View style={styles.avatarContainer}>
-              <Text style={styles.avatarEmoji}>{contact.avatar_emoji}</Text>
+              {AVATAR_IMAGES[contact.name] ? (
+                <Image source={{ uri: AVATAR_IMAGES[contact.name] }} style={styles.avatarImage} />
+              ) : (
+                <Ionicons name="person" size={28} color="#6C757D" />
+              )}
             </View>
             <View style={styles.contactInfo}>
               <Text style={styles.contactName}>{contact.name}</Text>
@@ -277,7 +288,7 @@ export default function ContactDetailScreen() {
               {signals.map((signal) => (
                 <View key={signal.id} style={styles.signalCard}>
                   <View style={styles.signalIconContainer}>
-                    <Ionicons name="radio" size={18} color="#00C880" />
+                    <Ionicons name="radio" size={18} color="#00D664" />
                   </View>
                   <View style={styles.signalContent}>
                     <View style={styles.signalTitleRow}>
@@ -320,7 +331,7 @@ export default function ContactDetailScreen() {
           {analyzing ? (
             <View style={styles.analyzingContainer}>
               <Animated.View style={[styles.analyzingSpinner, { opacity: pulseAnim }]}>
-                <ActivityIndicator size="large" color="#00C880" />
+                <ActivityIndicator size="large" color="#00D664" />
               </Animated.View>
               <Text style={styles.analyzingTitle}>Analyzing Signals</Text>
               <View style={styles.analyzingSteps}>
@@ -336,7 +347,7 @@ export default function ContactDetailScreen() {
                   {opportunities.length} Opportunit{opportunities.length === 1 ? 'y' : 'ies'} Detected
                 </Text>
                 <View style={styles.readyBadge}>
-                  <Ionicons name="checkmark-circle" size={14} color="#00C880" />
+                  <Ionicons name="checkmark-circle" size={14} color="#00D664" />
                   <Text style={styles.readyText}>Ready</Text>
                 </View>
               </View>
@@ -346,7 +357,7 @@ export default function ContactDetailScreen() {
                 <View key={index} style={styles.opportunityCard}>
                   <View style={styles.oppHeader}>
                     <View style={styles.oppIconContainer}>
-                      <Ionicons name="trending-up" size={20} color="#00C880" />
+                      <Ionicons name="trending-up" size={20} color="#00D664" />
                     </View>
                     <View style={styles.oppTitleContainer}>
                       <Text style={styles.oppTitle}>{opp.title}</Text>
@@ -394,7 +405,7 @@ export default function ContactDetailScreen() {
               ))}
 
               <View style={styles.poweredBy}>
-                <Ionicons name="flash" size={14} color="#00C880" />
+                <Ionicons name="flash" size={14} color="#00D664" />
                 <Text style={styles.poweredByText}>Powered by Flow AI</Text>
               </View>
               <Text style={styles.poweredBySubtext}>
@@ -404,7 +415,7 @@ export default function ContactDetailScreen() {
           ) : signals.length > 0 ? (
             <View style={styles.readyToAnalyze}>
               <View style={styles.readyIcon}>
-                <Ionicons name="flash-outline" size={32} color="#00C880" />
+                <Ionicons name="flash-outline" size={32} color="#00D664" />
               </View>
               <Text style={styles.readyTitle}>Ready to Analyze</Text>
               <Text style={styles.readySubtitle}>
@@ -517,7 +528,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#00C880',
+    borderColor: '#00D664',
   },
   contactHeader: {
     flexDirection: 'row',
@@ -527,10 +538,16 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
   },
   avatarEmoji: {
     fontSize: 28,
@@ -567,7 +584,7 @@ const styles = StyleSheet.create({
   signalBadge: {
     marginTop: 16,
     alignSelf: 'flex-start',
-    backgroundColor: '#80FFAD',
+    backgroundColor: '#00D664',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 4,
@@ -575,7 +592,7 @@ const styles = StyleSheet.create({
   signalBadgeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#059669',
+    color: '#FFFFFF',
   },
   section: {
     marginHorizontal: 16,
@@ -591,7 +608,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#00C880',
+    backgroundColor: '#00D664',
   },
   sectionHeaderLeft: {
     flexDirection: 'row',
@@ -657,7 +674,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(0, 200, 128, 0.1)',
+    backgroundColor: 'rgba(0, 214, 100, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -746,7 +763,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#80FFAD',
+    backgroundColor: '#00D664',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -754,7 +771,7 @@ const styles = StyleSheet.create({
   readyText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#059669',
+    color: '#FFFFFF',
   },
   opportunitiesSubtitle: {
     fontSize: 13,
@@ -763,9 +780,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   opportunityCard: {
-    backgroundColor: 'rgba(0, 200, 128, 0.05)',
+    backgroundColor: 'rgba(0, 214, 100, 0.08)',
     borderWidth: 1,
-    borderColor: '#00C880',
+    borderColor: '#00D664',
     borderRadius: 8,
     padding: 16,
     marginBottom: 12,
@@ -778,7 +795,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#80FFAD',
+    backgroundColor: '#00D664',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -797,7 +814,7 @@ const styles = StyleSheet.create({
   },
   matchBadge: {
     alignItems: 'center',
-    backgroundColor: '#80FFAD',
+    backgroundColor: '#00D664',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -806,11 +823,11 @@ const styles = StyleSheet.create({
   matchText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#059669',
+    color: '#FFFFFF',
   },
   matchLabel: {
     fontSize: 10,
-    color: '#059669',
+    color: '#FFFFFF',
   },
   oppDescription: {
     fontSize: 13,
@@ -838,7 +855,7 @@ const styles = StyleSheet.create({
     color: '#6C757D',
   },
   triggeredBadge: {
-    backgroundColor: '#80FFAD',
+    backgroundColor: '#00D664',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
@@ -846,7 +863,7 @@ const styles = StyleSheet.create({
   triggeredText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#059669',
+    color: '#FFFFFF',
   },
   reasoningContainer: {
     marginTop: 12,
@@ -865,7 +882,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   reasoningBullet: {
-    color: '#00C880',
+    color: '#00D664',
     marginRight: 8,
     fontSize: 14,
   },
@@ -879,7 +896,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#00C880',
+    backgroundColor: '#00D664',
     paddingVertical: 12,
     borderRadius: 8,
     marginTop: 16,
@@ -902,7 +919,7 @@ const styles = StyleSheet.create({
   poweredByText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#00C880',
+    color: '#00D664',
   },
   poweredBySubtext: {
     fontSize: 12,
@@ -918,7 +935,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#80FFAD',
+    backgroundColor: '#00D664',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -939,7 +956,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#00C880',
+    backgroundColor: '#00D664',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
