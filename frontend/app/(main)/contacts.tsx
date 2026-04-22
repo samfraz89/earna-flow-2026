@@ -169,7 +169,7 @@ export default function ContactsScreen() {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.logoIcon}>
-            <Ionicons name="git-network" size={24} color="#950574" />
+            <Text style={styles.logoText}>E</Text>
           </View>
           <View>
             <Text style={styles.headerTitle}>Earna Flow</Text>
@@ -257,9 +257,15 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: 'rgba(149, 5, 116, 0.1)',
+    backgroundColor: '#430C3D',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  logoText: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FF2ECC',
+    fontFamily: 'Helvetica',
   },
   headerTitle: {
     fontSize: 18,
