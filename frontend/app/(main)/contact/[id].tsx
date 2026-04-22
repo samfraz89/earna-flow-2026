@@ -380,18 +380,20 @@ export default function ContactDetailScreen() {
                 <Swipeable
                   key={signal.id}
                   renderRightActions={() => (
-                    <TouchableOpacity
-                      testID={`delete-signal-${signal.id}`}
-                      style={styles.swipeDeleteAction}
-                      onPress={() => handleDeleteSignal(signal.id)}
-                      activeOpacity={0.85}
-                    >
-                      <Ionicons name="trash" size={22} color="#FFFFFF" />
-                      <Text style={styles.swipeDeleteText}>Delete</Text>
-                    </TouchableOpacity>
+                    <View style={styles.swipeDeleteContainer}>
+                      <TouchableOpacity
+                        testID={`delete-signal-${signal.id}`}
+                        style={styles.swipeDeleteAction}
+                        onPress={() => handleDeleteSignal(signal.id)}
+                        activeOpacity={0.85}
+                      >
+                        <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
+                      </TouchableOpacity>
+                    </View>
                   )}
                   overshootRight={false}
                   rightThreshold={40}
+                  friction={2}
                 >
                   <View style={styles.signalCard}>
                     <View style={styles.signalIconContainer}>
@@ -941,20 +943,25 @@ const styles = StyleSheet.create({
   signalsList: {
     padding: 16,
   },
+  swipeDeleteContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingLeft: 8,
+    marginBottom: 8,
+  },
   swipeDeleteAction: {
     backgroundColor: '#DC2626',
     justifyContent: 'center',
     alignItems: 'center',
-    width: 88,
-    marginVertical: 4,
-    marginRight: 0,
+    width: 56,
+    height: '100%',
     borderRadius: 8,
-    gap: 4,
   },
   swipeDeleteText: {
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
   },
   signalCard: {
     flexDirection: 'row',
