@@ -308,6 +308,21 @@ async def get_signals(contact_id: str, request: Request):
     signals = await db.signals.find({"contact_id": contact_id, "user_id": user["id"]}, {"_id": 0}).sort("timestamp", -1).to_list(100)
     return signals
 
+
+@api_router.delete("/contacts/{contact_id}/signals/{signal_id}")
+async def delete_signal(contact_id: str, signal_id: str, request: Request):
+    user = await get_current_user(request)
+    signal = await db.signals.find_one({"id": signal_id, "contact_id": contact_id, "user_id": user["id"]})
+    if not signal:
+        raise HTTPException(status_code=404, detail="Signal not found")
+    await db.signals.delete_one({"id": signal_id, "contact_id": contact_id, "user_id": user["id"]})
+    if signal.get("is_auto"):
+        await db.contacts.update_one(
+            {"id": contact_id, "user_id": user["id"]},
+            {"$inc": {"auto_signals_count": -1}}
+        )
+    return {"status": "deleted", "signal_id": signal_id}
+
 @api_router.post("/contacts/{contact_id}/signals")
 async def create_signal(contact_id: str, signal_data: SignalCreate, request: Request):
     user = await get_current_user(request)

@@ -10,10 +10,12 @@ import {
   Pressable,
   Animated,
   Image,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { Swipeable } from 'react-native-gesture-handler';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -195,6 +197,29 @@ export default function ContactDetailScreen() {
     }
   };
 
+  const handleDeleteSignal = async (signalId: string) => {
+    const previous = signals;
+    // Optimistic UI update
+    setSignals((prev) => prev.filter((s) => s.id !== signalId));
+    try {
+      const storedToken = await AsyncStorage.getItem('access_token');
+      await axios.delete(
+        `${API_URL}/api/contacts/${id}/signals/${signalId}`,
+        { headers: { Authorization: `Bearer ${storedToken}` } }
+      );
+      // Refresh contact to reflect potential auto_signals_count change
+      const contactRes = await axios.get(
+        `${API_URL}/api/contacts/${id}`,
+        { headers: { Authorization: `Bearer ${storedToken}` } }
+      );
+      setContact(contactRes.data);
+    } catch (error) {
+      console.log('Error deleting signal:', error);
+      setSignals(previous);
+      Alert.alert('Error', 'Could not delete this signal. Please try again.');
+    }
+  };
+
   const formatTimeAgo = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -321,26 +346,43 @@ export default function ContactDetailScreen() {
           ) : (
             <View style={styles.signalsList}>
               {signals.map((signal) => (
-                <View key={signal.id} style={styles.signalCard}>
-                  <View style={styles.signalIconContainer}>
-                    <Ionicons name="radio" size={18} color="#00D664" />
-                  </View>
-                  <View style={styles.signalContent}>
-                    <View style={styles.signalTitleRow}>
-                      <Text style={styles.signalTitle}>{signal.title}</Text>
-                      {signal.is_auto && (
-                        <View style={styles.autoBadge}>
-                          <Text style={styles.autoBadgeText}>Auto</Text>
-                        </View>
-                      )}
+                <Swipeable
+                  key={signal.id}
+                  renderRightActions={() => (
+                    <TouchableOpacity
+                      testID={`delete-signal-${signal.id}`}
+                      style={styles.swipeDeleteAction}
+                      onPress={() => handleDeleteSignal(signal.id)}
+                      activeOpacity={0.85}
+                    >
+                      <Ionicons name="trash" size={22} color="#FFFFFF" />
+                      <Text style={styles.swipeDeleteText}>Delete</Text>
+                    </TouchableOpacity>
+                  )}
+                  overshootRight={false}
+                  rightThreshold={40}
+                >
+                  <View style={styles.signalCard}>
+                    <View style={styles.signalIconContainer}>
+                      <Ionicons name="radio" size={18} color="#00D664" />
                     </View>
-                    <Text style={styles.signalDescription}>{signal.description}</Text>
-                    <View style={styles.signalTime}>
-                      <Ionicons name="time-outline" size={12} color="#6C757D" />
-                      <Text style={styles.signalTimeText}>{formatTimeAgo(signal.timestamp)}</Text>
+                    <View style={styles.signalContent}>
+                      <View style={styles.signalTitleRow}>
+                        <Text style={styles.signalTitle}>{signal.title}</Text>
+                        {signal.is_auto && (
+                          <View style={styles.autoBadge}>
+                            <Text style={styles.autoBadgeText}>Auto</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.signalDescription}>{signal.description}</Text>
+                      <View style={styles.signalTime}>
+                        <Ionicons name="time-outline" size={12} color="#6C757D" />
+                        <Text style={styles.signalTimeText}>{formatTimeAgo(signal.timestamp)}</Text>
+                      </View>
                     </View>
                   </View>
-                </View>
+                </Swipeable>
               ))}
               <Text style={styles.signalsCount}>
                 {signals.length} total signals ({signals.filter(s => s.is_auto).length} auto, {signals.filter(s => !s.is_auto).length} manual)
@@ -780,6 +822,21 @@ const styles = StyleSheet.create({
   },
   signalsList: {
     padding: 16,
+  },
+  swipeDeleteAction: {
+    backgroundColor: '#DC2626',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 88,
+    marginVertical: 4,
+    marginRight: 0,
+    borderRadius: 8,
+    gap: 4,
+  },
+  swipeDeleteText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
   signalCard: {
     flexDirection: 'row',
