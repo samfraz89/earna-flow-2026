@@ -314,15 +314,15 @@ export default function ContactDetailScreen() {
           )}
         </View>
 
-        {/* Flow AI Engine Section */}
+        {/* Flow Engine Section */}
         <View style={styles.section}>
-          <View style={styles.sectionHeaderGreen}>
+          <View style={styles.sectionHeaderPurple}>
             <View style={styles.sectionHeaderLeft}>
               <View style={styles.sectionIcon}>
                 <Ionicons name="flash" size={18} color="#FFFFFF" />
               </View>
               <View>
-                <Text style={[styles.sectionTitle, styles.italicTitle]}>Flow AI Engine</Text>
+                <Text style={[styles.sectionTitle, styles.italicTitle]}>Flow</Text>
                 <Text style={styles.sectionSubtitle}>Moment Detection</Text>
               </View>
             </View>
@@ -611,6 +611,15 @@ const styles = StyleSheet.create({
     paddingRight: 16,
     paddingVertical: 16,
     backgroundColor: '#00D664',
+  },
+  sectionHeaderPurple: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingLeft: 28,
+    paddingRight: 16,
+    paddingVertical: 16,
+    backgroundColor: '#B52EFF',
   },
   sectionHeaderLeft: {
     flexDirection: 'row',
