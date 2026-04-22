@@ -41,7 +41,19 @@ interface Contact {
   email?: string;
   phone?: string;
   avatar_emoji: string;
+  avatar_url?: string | null;
   auto_signals_count: number;
+}
+
+interface PhonebookEntry {
+  id: string;
+  name: string;
+  role: string;
+  company: string;
+  location: string;
+  email?: string;
+  phone?: string;
+  avatar_url: string;
 }
 
 export default function ContactsScreen() {
@@ -50,7 +62,11 @@ export default function ContactsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [modalStep, setModalStep] = useState<'choice' | 'phonebook' | 'manual'>('choice');
   const [saving, setSaving] = useState(false);
+  const [phonebook, setPhonebook] = useState<PhonebookEntry[]>([]);
+  const [phonebookLoading, setPhonebookLoading] = useState(false);
+  const [selectedPhonebookIds, setSelectedPhonebookIds] = useState<Set<string>>(new Set());
   const [form, setForm] = useState({
     name: '',
     role: '',
@@ -110,6 +126,76 @@ export default function ContactsScreen() {
     setForm({ name: '', role: '', company: '', location: '', email: '', phone: '' });
   };
 
+  const closeAddModal = () => {
+    setShowAddModal(false);
+    setModalStep('choice');
+    setSelectedPhonebookIds(new Set());
+    resetForm();
+  };
+
+  const openPhonebook = async () => {
+    setModalStep('phonebook');
+    setPhonebookLoading(true);
+    try {
+      const storedToken = await AsyncStorage.getItem('access_token');
+      const response = await axios.get(`${API_URL}/api/phonebook`, {
+        headers: { Authorization: `Bearer ${storedToken}` },
+      });
+      setPhonebook(response.data);
+    } catch (error) {
+      console.log('Error fetching phonebook:', error);
+      Alert.alert('Error', 'Could not load phonebook.');
+    } finally {
+      setPhonebookLoading(false);
+    }
+  };
+
+  const togglePhonebookSelection = (pbId: string) => {
+    setSelectedPhonebookIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(pbId)) next.delete(pbId);
+      else next.add(pbId);
+      return next;
+    });
+  };
+
+  const handleImportPhonebook = async () => {
+    if (selectedPhonebookIds.size === 0) {
+      Alert.alert('No contacts selected', 'Please select at least one contact to add.');
+      return;
+    }
+    setSaving(true);
+    try {
+      const storedToken = await AsyncStorage.getItem('access_token');
+      const toImport = phonebook.filter((p) => selectedPhonebookIds.has(p.id));
+      await Promise.all(
+        toImport.map((p) =>
+          axios.post(
+            `${API_URL}/api/contacts`,
+            {
+              name: p.name,
+              role: p.role,
+              company: p.company,
+              location: p.location,
+              email: p.email || null,
+              phone: p.phone || null,
+              avatar_url: p.avatar_url,
+              avatar_emoji: '👤',
+            },
+            { headers: { Authorization: `Bearer ${storedToken}` } }
+          )
+        )
+      );
+      closeAddModal();
+      fetchContacts();
+    } catch (error) {
+      console.log('Error importing contacts:', error);
+      Alert.alert('Error', 'Failed to import contacts. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleAddContact = async () => {
     if (!form.name.trim() || !form.role.trim() || !form.company.trim() || !form.location.trim()) {
       Alert.alert('Missing fields', 'Please fill in Name, Role, Company and Location.');
@@ -131,8 +217,7 @@ export default function ContactsScreen() {
         },
         { headers: { Authorization: `Bearer ${storedToken}` } }
       );
-      resetForm();
-      setShowAddModal(false);
+      closeAddModal();
       fetchContacts();
     } catch (error: any) {
       console.log('Error adding contact:', error);
@@ -143,7 +228,7 @@ export default function ContactsScreen() {
   };
 
   const renderContact = ({ item }: { item: Contact }) => {
-    const avatarUrl = AVATAR_IMAGES[item.name];
+    const avatarUrl = item.avatar_url || AVATAR_IMAGES[item.name];
     
     return (
       <TouchableOpacity
@@ -288,125 +373,256 @@ export default function ContactsScreen() {
         visible={showAddModal}
         animationType="slide"
         transparent
-        onRequestClose={() => setShowAddModal(false)}
+        onRequestClose={closeAddModal}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.modalOverlay}
         >
-          <Pressable style={styles.modalBackdrop} onPress={() => setShowAddModal(false)} />
+          <Pressable style={styles.modalBackdrop} onPress={closeAddModal} />
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Contact</Text>
+              <View style={styles.modalHeaderLeft}>
+                {modalStep !== 'choice' && (
+                  <TouchableOpacity
+                    testID="modal-back-button"
+                    style={styles.modalBackButton}
+                    onPress={() => setModalStep('choice')}
+                  >
+                    <Ionicons name="chevron-back" size={22} color="#343A40" />
+                  </TouchableOpacity>
+                )}
+                <Text style={styles.modalTitle}>
+                  {modalStep === 'choice' ? 'Add Contact' : modalStep === 'phonebook' ? 'Phonebook' : 'Add Manually'}
+                </Text>
+              </View>
               <TouchableOpacity
                 testID="close-add-contact-modal"
                 style={styles.modalCloseButton}
-                onPress={() => setShowAddModal(false)}
+                onPress={closeAddModal}
               >
                 <Ionicons name="close" size={22} color="#6C757D" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView
-              style={styles.modalScroll}
-              contentContainerStyle={styles.modalScrollContent}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
-              <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Full Name *</Text>
-                <TextInput
-                  testID="input-name"
-                  style={styles.input}
-                  placeholder="e.g., Jane Doe"
-                  placeholderTextColor="#ADB5BD"
-                  value={form.name}
-                  onChangeText={(v) => setForm({ ...form, name: v })}
-                  autoCapitalize="words"
-                />
-              </View>
+            {modalStep === 'choice' && (
+              <View style={styles.choiceContainer}>
+                <TouchableOpacity
+                  testID="choice-phonebook"
+                  style={styles.choiceCard}
+                  onPress={openPhonebook}
+                  activeOpacity={0.85}
+                >
+                  <View style={[styles.choiceIcon, { backgroundColor: '#430C3D' }]}>
+                    <Ionicons name="book" size={22} color="#FFFFFF" />
+                  </View>
+                  <View style={styles.choiceText}>
+                    <Text style={styles.choiceTitle}>Import from Phonebook</Text>
+                    <Text style={styles.choiceSubtitle}>Pick one or more contacts from your phone</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#6C757D" />
+                </TouchableOpacity>
 
-              <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Role *</Text>
-                <TextInput
-                  testID="input-role"
-                  style={styles.input}
-                  placeholder="e.g., Real Estate Agent"
-                  placeholderTextColor="#ADB5BD"
-                  value={form.role}
-                  onChangeText={(v) => setForm({ ...form, role: v })}
-                />
+                <TouchableOpacity
+                  testID="choice-manual"
+                  style={styles.choiceCard}
+                  onPress={() => setModalStep('manual')}
+                  activeOpacity={0.85}
+                >
+                  <View style={[styles.choiceIcon, { backgroundColor: '#FF2ECC' }]}>
+                    <Ionicons name="create" size={22} color="#FFFFFF" />
+                  </View>
+                  <View style={styles.choiceText}>
+                    <Text style={styles.choiceTitle}>Add Manually</Text>
+                    <Text style={styles.choiceSubtitle}>Enter contact details by hand</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#6C757D" />
+                </TouchableOpacity>
               </View>
+            )}
 
-              <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Company *</Text>
-                <TextInput
-                  testID="input-company"
-                  style={styles.input}
-                  placeholder="e.g., Premier Properties"
-                  placeholderTextColor="#ADB5BD"
-                  value={form.company}
-                  onChangeText={(v) => setForm({ ...form, company: v })}
-                />
-              </View>
-
-              <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Location *</Text>
-                <TextInput
-                  testID="input-location"
-                  style={styles.input}
-                  placeholder="e.g., Auckland, NZ"
-                  placeholderTextColor="#ADB5BD"
-                  value={form.location}
-                  onChangeText={(v) => setForm({ ...form, location: v })}
-                />
-              </View>
-
-              <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Email</Text>
-                <TextInput
-                  testID="input-email"
-                  style={styles.input}
-                  placeholder="e.g., jane@example.com"
-                  placeholderTextColor="#ADB5BD"
-                  value={form.email}
-                  onChangeText={(v) => setForm({ ...form, email: v })}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                />
-              </View>
-
-              <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Phone</Text>
-                <TextInput
-                  testID="input-phone"
-                  style={styles.input}
-                  placeholder="e.g., +64 21 123 4567"
-                  placeholderTextColor="#ADB5BD"
-                  value={form.phone}
-                  onChangeText={(v) => setForm({ ...form, phone: v })}
-                  keyboardType="phone-pad"
-                />
-              </View>
-
-              <TouchableOpacity
-                testID="submit-add-contact"
-                style={[styles.submitButton, saving && { opacity: 0.7 }]}
-                onPress={handleAddContact}
-                disabled={saving}
-                activeOpacity={0.85}
-              >
-                {saving ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
+            {modalStep === 'phonebook' && (
+              <View style={styles.phonebookWrapper}>
+                {phonebookLoading ? (
+                  <View style={styles.phonebookLoader}>
+                    <ActivityIndicator size="large" color="#00D664" />
+                  </View>
+                ) : phonebook.length === 0 ? (
+                  <View style={styles.phonebookEmpty}>
+                    <Ionicons name="checkmark-done" size={36} color="#00D664" />
+                    <Text style={styles.emptyTitle}>All contacts added</Text>
+                    <Text style={styles.emptySubtitle}>
+                      Every phonebook contact is already in your list.
+                    </Text>
+                  </View>
                 ) : (
                   <>
-                    <Ionicons name="person-add" size={18} color="#FFFFFF" />
-                    <Text style={styles.submitButtonText}>Add Contact</Text>
+                    <Text style={styles.phonebookHelper}>
+                      {selectedPhonebookIds.size > 0
+                        ? `${selectedPhonebookIds.size} selected`
+                        : 'Tap contacts to select'}
+                    </Text>
+                    <ScrollView
+                      style={styles.phonebookList}
+                      contentContainerStyle={{ paddingBottom: 16 }}
+                      showsVerticalScrollIndicator={false}
+                    >
+                      {phonebook.map((p) => {
+                        const selected = selectedPhonebookIds.has(p.id);
+                        return (
+                          <TouchableOpacity
+                            key={p.id}
+                            testID={`phonebook-entry-${p.id}`}
+                            style={[styles.phonebookRow, selected && styles.phonebookRowSelected]}
+                            onPress={() => togglePhonebookSelection(p.id)}
+                            activeOpacity={0.8}
+                          >
+                            <View style={styles.phonebookAvatarWrap}>
+                              <Image source={{ uri: p.avatar_url }} style={styles.phonebookAvatar} />
+                            </View>
+                            <View style={styles.phonebookInfo}>
+                              <Text style={styles.phonebookName}>{p.name}</Text>
+                              <Text style={styles.phonebookRole} numberOfLines={1}>
+                                {p.role} · {p.company}
+                              </Text>
+                              <Text style={styles.phonebookLocation}>{p.location}</Text>
+                            </View>
+                            <View style={[styles.checkbox, selected && styles.checkboxSelected]}>
+                              {selected && <Ionicons name="checkmark" size={16} color="#FFFFFF" />}
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
+                    <TouchableOpacity
+                      testID="import-phonebook-button"
+                      style={[
+                        styles.submitButton,
+                        (saving || selectedPhonebookIds.size === 0) && { opacity: 0.6 },
+                      ]}
+                      onPress={handleImportPhonebook}
+                      disabled={saving || selectedPhonebookIds.size === 0}
+                      activeOpacity={0.85}
+                    >
+                      {saving ? (
+                        <ActivityIndicator color="#FFFFFF" size="small" />
+                      ) : (
+                        <>
+                          <Ionicons name="person-add" size={18} color="#FFFFFF" />
+                          <Text style={styles.submitButtonText}>
+                            Add {selectedPhonebookIds.size > 0 ? `${selectedPhonebookIds.size} ` : ''}
+                            Contact{selectedPhonebookIds.size === 1 ? '' : 's'}
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
                   </>
                 )}
-              </TouchableOpacity>
-            </ScrollView>
+              </View>
+            )}
+
+            {modalStep === 'manual' && (
+              <ScrollView
+                style={styles.modalScroll}
+                contentContainerStyle={styles.modalScrollContent}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+                <View style={styles.field}>
+                  <Text style={styles.fieldLabel}>Full Name *</Text>
+                  <TextInput
+                    testID="input-name"
+                    style={styles.input}
+                    placeholder="e.g., Jane Doe"
+                    placeholderTextColor="#ADB5BD"
+                    value={form.name}
+                    onChangeText={(v) => setForm({ ...form, name: v })}
+                    autoCapitalize="words"
+                  />
+                </View>
+
+                <View style={styles.field}>
+                  <Text style={styles.fieldLabel}>Role *</Text>
+                  <TextInput
+                    testID="input-role"
+                    style={styles.input}
+                    placeholder="e.g., Real Estate Agent"
+                    placeholderTextColor="#ADB5BD"
+                    value={form.role}
+                    onChangeText={(v) => setForm({ ...form, role: v })}
+                  />
+                </View>
+
+                <View style={styles.field}>
+                  <Text style={styles.fieldLabel}>Company *</Text>
+                  <TextInput
+                    testID="input-company"
+                    style={styles.input}
+                    placeholder="e.g., Premier Properties"
+                    placeholderTextColor="#ADB5BD"
+                    value={form.company}
+                    onChangeText={(v) => setForm({ ...form, company: v })}
+                  />
+                </View>
+
+                <View style={styles.field}>
+                  <Text style={styles.fieldLabel}>Location *</Text>
+                  <TextInput
+                    testID="input-location"
+                    style={styles.input}
+                    placeholder="e.g., Auckland, NZ"
+                    placeholderTextColor="#ADB5BD"
+                    value={form.location}
+                    onChangeText={(v) => setForm({ ...form, location: v })}
+                  />
+                </View>
+
+                <View style={styles.field}>
+                  <Text style={styles.fieldLabel}>Email</Text>
+                  <TextInput
+                    testID="input-email"
+                    style={styles.input}
+                    placeholder="e.g., jane@example.com"
+                    placeholderTextColor="#ADB5BD"
+                    value={form.email}
+                    onChangeText={(v) => setForm({ ...form, email: v })}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                  />
+                </View>
+
+                <View style={styles.field}>
+                  <Text style={styles.fieldLabel}>Phone</Text>
+                  <TextInput
+                    testID="input-phone"
+                    style={styles.input}
+                    placeholder="e.g., +64 21 123 4567"
+                    placeholderTextColor="#ADB5BD"
+                    value={form.phone}
+                    onChangeText={(v) => setForm({ ...form, phone: v })}
+                    keyboardType="phone-pad"
+                  />
+                </View>
+
+                <TouchableOpacity
+                  testID="submit-add-contact"
+                  style={[styles.submitButton, saving && { opacity: 0.7 }]}
+                  onPress={handleAddContact}
+                  disabled={saving}
+                  activeOpacity={0.85}
+                >
+                  {saving ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <>
+                      <Ionicons name="person-add" size={18} color="#FFFFFF" />
+                      <Text style={styles.submitButtonText}>Add Contact</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </ScrollView>
+            )}
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -658,6 +874,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
+  modalHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  modalBackButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
@@ -670,6 +900,122 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  choiceContainer: {
+    paddingVertical: 16,
+    gap: 12,
+  },
+  choiceCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    padding: 14,
+  },
+  choiceIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  choiceText: {
+    flex: 1,
+  },
+  choiceTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#343A40',
+  },
+  choiceSubtitle: {
+    fontSize: 12,
+    color: '#6C757D',
+    marginTop: 2,
+  },
+  phonebookWrapper: {
+    flex: 1,
+    minHeight: 420,
+    paddingBottom: 8,
+  },
+  phonebookLoader: {
+    paddingVertical: 48,
+    alignItems: 'center',
+  },
+  phonebookEmpty: {
+    paddingVertical: 48,
+    alignItems: 'center',
+    gap: 10,
+  },
+  phonebookHelper: {
+    fontSize: 12,
+    color: '#6C757D',
+    marginVertical: 10,
+  },
+  phonebookList: {
+    maxHeight: 460,
+  },
+  phonebookRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    marginBottom: 6,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  phonebookRowSelected: {
+    borderColor: '#00D664',
+    backgroundColor: 'rgba(0, 214, 100, 0.06)',
+  },
+  phonebookAvatarWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    overflow: 'hidden',
+    backgroundColor: '#F3F4F6',
+  },
+  phonebookAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  phonebookInfo: {
+    flex: 1,
+  },
+  phonebookName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#343A40',
+  },
+  phonebookRole: {
+    fontSize: 12,
+    color: '#6C757D',
+    marginTop: 2,
+  },
+  phonebookLocation: {
+    fontSize: 11,
+    color: '#ADB5BD',
+    marginTop: 1,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxSelected: {
+    backgroundColor: '#00D664',
+    borderColor: '#00D664',
   },
   modalScroll: {
     marginTop: 8,

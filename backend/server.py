@@ -76,6 +76,7 @@ class Contact(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     avatar_emoji: str = "👤"
+    avatar_url: Optional[str] = None
     auto_signals_count: int = 0
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     user_id: str
@@ -88,6 +89,7 @@ class ContactCreate(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     avatar_emoji: str = "👤"
+    avatar_url: Optional[str] = None
 
 class Signal(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -263,6 +265,31 @@ async def create_contact(contact_data: ContactCreate, request: Request):
     )
     await db.contacts.insert_one(contact.dict())
     return contact.dict()
+
+# ============= PHONEBOOK (DEMO) =============
+
+PHONEBOOK = [
+    {"id": "pb-1", "name": "Olivia Parker", "role": "Mortgage Broker", "company": "Harbour Finance", "location": "Auckland, NZ", "email": "olivia@harbourfinance.co.nz", "phone": "+64 21 555 0101", "avatar_url": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face"},
+    {"id": "pb-2", "name": "Liam Nakamura", "role": "Commercial Lawyer", "company": "Kensington Legal", "location": "Wellington, NZ", "email": "liam@kensingtonlegal.co.nz", "phone": "+64 21 555 0102", "avatar_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face"},
+    {"id": "pb-3", "name": "Sophia Patel", "role": "Family GP", "company": "City Medical Clinic", "location": "Christchurch, NZ", "email": "sophia@citymedical.co.nz", "phone": "+64 21 555 0103", "avatar_url": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face"},
+    {"id": "pb-4", "name": "Marcus O'Brien", "role": "Residential Builder", "company": "Kiwi Build Co", "location": "Hamilton, NZ", "email": "marcus@kiwibuild.co.nz", "phone": "+64 21 555 0104", "avatar_url": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face"},
+    {"id": "pb-5", "name": "Chloe Wilson", "role": "High School Teacher", "company": "Westside College", "location": "Auckland, NZ", "email": "chloe@westsidecollege.ac.nz", "phone": "+64 21 555 0105", "avatar_url": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=face"},
+    {"id": "pb-6", "name": "Ethan Ramirez", "role": "Senior Accountant", "company": "Ledger & Co", "location": "Wellington, NZ", "email": "ethan@ledger.co.nz", "phone": "+64 21 555 0106", "avatar_url": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=face"},
+    {"id": "pb-7", "name": "Ava Thompson", "role": "Real Estate Agent", "company": "Coastal Realty", "location": "Tauranga, NZ", "email": "ava@coastalrealty.co.nz", "phone": "+64 21 555 0107", "avatar_url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face"},
+    {"id": "pb-8", "name": "Noah Kimura", "role": "Insurance Adviser", "company": "ShieldLife NZ", "location": "Auckland, NZ", "email": "noah@shieldlife.co.nz", "phone": "+64 21 555 0108", "avatar_url": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face"},
+    {"id": "pb-9", "name": "Isabella Martinez", "role": "Digital Marketing Lead", "company": "BrightWave Agency", "location": "Queenstown, NZ", "email": "isabella@brightwave.co.nz", "phone": "+64 21 555 0109", "avatar_url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face"},
+    {"id": "pb-10", "name": "Jackson Lee", "role": "Startup Founder & CEO", "company": "Orbit Tech", "location": "Auckland, NZ", "email": "jackson@orbittech.co.nz", "phone": "+64 21 555 0110", "avatar_url": "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=200&h=200&fit=crop&crop=face"},
+]
+
+
+@api_router.get("/phonebook")
+async def get_phonebook(request: Request):
+    user = await get_current_user(request)
+    # Return phonebook entries that are NOT already in the user's contacts (match by name)
+    existing = await db.contacts.find({"user_id": user["id"]}, {"_id": 0, "name": 1}).to_list(1000)
+    existing_names = {c.get("name", "").strip().lower() for c in existing}
+    available = [p for p in PHONEBOOK if p["name"].strip().lower() not in existing_names]
+    return available
 
 @api_router.get("/contacts/{contact_id}")
 async def get_contact(contact_id: str, request: Request):

@@ -35,6 +35,7 @@ interface Contact {
   email?: string;
   phone?: string;
   avatar_emoji: string;
+  avatar_url?: string | null;
   auto_signals_count: number;
 }
 
@@ -212,8 +213,8 @@ export default function ContactDetailScreen() {
         <View style={styles.contactCard}>
           <View style={styles.contactHeader}>
             <View style={styles.avatarContainer}>
-              {AVATAR_IMAGES[contact.name] ? (
-                <Image source={{ uri: AVATAR_IMAGES[contact.name] }} style={styles.avatarImage} />
+              {(contact.avatar_url || AVATAR_IMAGES[contact.name]) ? (
+                <Image source={{ uri: contact.avatar_url || AVATAR_IMAGES[contact.name] }} style={styles.avatarImage} />
               ) : (
                 <Ionicons name="person" size={28} color="#6C757D" />
               )}
