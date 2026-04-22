@@ -18,11 +18,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '';
 
-// Stock headshot images for contacts
+// Stock headshot images for contacts - close-up face shots
 const AVATAR_IMAGES: { [key: string]: string } = {
-  'Sarah Mitchell': 'https://images.unsplash.com/photo-1655249481446-25d575f1c054?w=200&h=200&fit=crop&crop=face',
-  'James Chen': 'https://images.unsplash.com/photo-1576558656222-ba66febe3dec?w=200&h=200&fit=crop&crop=face',
-  'Emma Rodriguez': 'https://images.unsplash.com/photo-1689600944138-da3b150d9cb8?w=200&h=200&fit=crop&crop=face',
+  'Sarah Mitchell': 'https://images.unsplash.com/photo-1609371497456-3a55a205d5eb?w=200&h=200&fit=crop&crop=face',
+  'James Chen': 'https://images.unsplash.com/photo-1633625510483-c177f4308f33?w=200&h=200&fit=crop&crop=face',
+  'Emma Rodriguez': 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop&crop=face',
 };
 
 interface Contact {
