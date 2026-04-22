@@ -263,6 +263,22 @@ export default function ContactDetailScreen() {
     return 'Just now';
   };
 
+  const handleUnarchive = async () => {
+    if (!contact) return;
+    try {
+      const storedToken = await AsyncStorage.getItem('access_token');
+      await axios.patch(
+        `${API_URL}/api/contacts/${id}/archive`,
+        { is_archived: false },
+        { headers: { Authorization: `Bearer ${storedToken}` } }
+      );
+      setContact({ ...contact, is_archived: false });
+    } catch (error) {
+      console.log('Error unarchiving:', error);
+      Alert.alert('Error', 'Could not unarchive this contact.');
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -299,6 +315,28 @@ export default function ContactDetailScreen() {
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* Archived Banner */}
+        {contact.is_archived && (
+          <View style={styles.archivedBanner}>
+            <View style={styles.archivedBannerLeft}>
+              <Ionicons name="archive" size={18} color="#FFFFFF" />
+              <View>
+                <Text style={styles.archivedBannerTitle}>This contact is archived</Text>
+                <Text style={styles.archivedBannerSubtitle}>Unarchive to show on your home list</Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              testID="unarchive-button"
+              style={styles.unarchiveButton}
+              onPress={handleUnarchive}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="arrow-undo" size={16} color="#430C3D" />
+              <Text style={styles.unarchiveButtonText}>Unarchive</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Contact Card */}
         <View style={styles.contactCard}>
           <View style={styles.contactHeader}>
@@ -792,6 +830,47 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  archivedBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#430C3D',
+    marginHorizontal: 16,
+    marginTop: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  archivedBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  archivedBannerTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  archivedBannerSubtitle: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.75)',
+    marginTop: 1,
+  },
+  unarchiveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  unarchiveButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#430C3D',
   },
   contactCard: {
     backgroundColor: '#FFFFFF',
