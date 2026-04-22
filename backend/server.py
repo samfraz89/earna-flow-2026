@@ -116,6 +116,7 @@ class Opportunity(BaseModel):
     partner_name: str
     triggered_by: str
     ai_reasoning: List[str]
+    is_archived: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     user_id: str
 
@@ -412,6 +413,12 @@ Only respond with valid JSON, no other text."""
         
         ai_response = json.loads(clean_response)
         opportunities = ai_response.get("opportunities", [])
+        
+        # Archive previous opportunities before storing new ones
+        await db.opportunities.update_many(
+            {"contact_id": contact_id, "user_id": user["id"], "is_archived": {"$ne": True}},
+            {"$set": {"is_archived": True}}
+        )
         
         # Store opportunities
         for opp in opportunities:

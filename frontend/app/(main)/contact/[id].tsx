@@ -49,12 +49,15 @@ interface Signal {
 }
 
 interface Opportunity {
+  id?: string;
   title: string;
   description: string;
   match_percentage: number;
   partner_name: string;
   triggered_by: string;
   ai_reasoning: string[];
+  is_archived?: boolean;
+  created_at?: string;
 }
 
 const SIGNAL_TYPES = [
@@ -73,8 +76,11 @@ export default function ContactDetailScreen() {
   const [contact, setContact] = useState<Contact | null>(null);
   const [signals, setSignals] = useState<Signal[]>([]);
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [archivedOpportunities, setArchivedOpportunities] = useState<Opportunity[]>([]);
+  const [historyExpanded, setHistoryExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeFailed, setAnalyzeFailed] = useState(false);
   const [showAddSignal, setShowAddSignal] = useState(false);
   const [analysisComplete, setAnalysisComplete] = useState(false);
   
@@ -106,9 +112,15 @@ export default function ContactDetailScreen() {
 
       setContact(contactRes.data);
       setSignals(signalsRes.data);
-      setOpportunities(opportunitiesRes.data);
+      const allOpps: Opportunity[] = opportunitiesRes.data || [];
+      const current = allOpps.filter((o) => !o.is_archived);
+      const archived = allOpps
+        .filter((o) => o.is_archived)
+        .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+      setOpportunities(current);
+      setArchivedOpportunities(archived);
       
-      if (opportunitiesRes.data.length > 0) {
+      if (current.length > 0) {
         setAnalysisComplete(true);
       }
     } catch (error) {
@@ -124,6 +136,7 @@ export default function ContactDetailScreen() {
 
   const analyzeSignals = async () => {
     setAnalyzing(true);
+    setAnalyzeFailed(false);
     setAnalysisComplete(false);
     try {
       const storedToken = await AsyncStorage.getItem('access_token');
@@ -132,10 +145,22 @@ export default function ContactDetailScreen() {
         {},
         { headers: { Authorization: `Bearer ${storedToken}` } }
       );
-      setOpportunities(response.data.opportunities || []);
+      const newOpps: Opportunity[] = response.data.opportunities || [];
+      setOpportunities(newOpps);
       setAnalysisComplete(true);
+      // Refresh archived list after backend archives old ones
+      const oppsRes = await axios.get(
+        `${API_URL}/api/contacts/${id}/opportunities`,
+        { headers: { Authorization: `Bearer ${storedToken}` } }
+      );
+      const allOpps: Opportunity[] = oppsRes.data || [];
+      const archived = allOpps
+        .filter((o) => o.is_archived)
+        .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+      setArchivedOpportunities(archived);
     } catch (error) {
       console.log('Error analyzing:', error);
+      setAnalyzeFailed(true);
     } finally {
       setAnalyzing(false);
     }
@@ -155,7 +180,16 @@ export default function ContactDetailScreen() {
         { headers: { Authorization: `Bearer ${storedToken}` } }
       );
       setShowAddSignal(false);
-      fetchData();
+      // Refresh signals then auto-run analysis
+      const headers = { Authorization: `Bearer ${storedToken}` };
+      const [contactRes, signalsRes] = await Promise.all([
+        axios.get(`${API_URL}/api/contacts/${id}`, { headers }),
+        axios.get(`${API_URL}/api/contacts/${id}/signals`, { headers }),
+      ]);
+      setContact(contactRes.data);
+      setSignals(signalsRes.data);
+      // Auto-trigger AI analysis
+      await analyzeSignals();
     } catch (error) {
       console.log('Error adding signal:', error);
     }
@@ -332,7 +366,7 @@ export default function ContactDetailScreen() {
           {analyzing ? (
             <View style={styles.analyzingContainer}>
               <Animated.View style={[styles.analyzingSpinner, { opacity: pulseAnim }]}>
-                <ActivityIndicator size="large" color="#00D664" />
+                <ActivityIndicator size="large" color="#B52EFF" />
               </Animated.View>
               <Text style={styles.analyzingTitle}>Analyzing Signals</Text>
               <View style={styles.analyzingSteps}>
@@ -340,6 +374,24 @@ export default function ContactDetailScreen() {
                 <Text style={styles.analyzingStep}>🤖 AI agents analyzing context...</Text>
                 <Text style={styles.analyzingStep}>🎯 Matching opportunities...</Text>
               </View>
+            </View>
+          ) : analyzeFailed ? (
+            <View style={styles.readyToAnalyze}>
+              <View style={[styles.readyIcon, { backgroundColor: '#FEE2E2' }]}>
+                <Ionicons name="alert-circle" size={32} color="#DC2626" />
+              </View>
+              <Text style={styles.readyTitle}>Analysis Failed</Text>
+              <Text style={styles.readySubtitle}>
+                We couldn't run the AI moment detection. Tap retry to try again.
+              </Text>
+              <TouchableOpacity
+                testID="retry-analyze-button"
+                style={styles.analyzeButton}
+                onPress={analyzeSignals}
+              >
+                <Ionicons name="refresh" size={18} color="#FFFFFF" />
+                <Text style={styles.analyzeButtonText}>Retry Analysis</Text>
+              </TouchableOpacity>
             </View>
           ) : opportunities.length > 0 ? (
             <View style={styles.opportunitiesContainer}>
@@ -435,6 +487,68 @@ export default function ContactDetailScreen() {
             </View>
           )}
         </View>
+
+        {/* Previous Opportunities (Archived History) */}
+        {archivedOpportunities.length > 0 && (
+          <View style={styles.section}>
+            <TouchableOpacity
+              testID="history-toggle"
+              style={styles.historyHeader}
+              onPress={() => setHistoryExpanded((v) => !v)}
+              activeOpacity={0.85}
+            >
+              <View style={styles.historyHeaderLeft}>
+                <View style={styles.historyFolderIcon}>
+                  <Ionicons name="folder" size={18} color="#FFFFFF" />
+                </View>
+                <View>
+                  <Text style={styles.historyTitle}>Previous Opportunities</Text>
+                  <Text style={styles.historySubtitle}>
+                    {archivedOpportunities.length} archived · sorted by date
+                  </Text>
+                </View>
+              </View>
+              <Ionicons
+                name={historyExpanded ? 'chevron-up' : 'chevron-down'}
+                size={22}
+                color="#FFFFFF"
+              />
+            </TouchableOpacity>
+
+            {historyExpanded && (
+              <View style={styles.historyBody}>
+                {archivedOpportunities.map((opp, index) => {
+                  const dateStr = opp.created_at
+                    ? new Date(opp.created_at).toLocaleDateString(undefined, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })
+                    : '';
+                  return (
+                    <View key={opp.id || index} style={styles.historyCard}>
+                      <View style={styles.historyCardHeader}>
+                        <View style={styles.historyDot} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.historyCardTitle}>{opp.title}</Text>
+                          <Text style={styles.historyCardMeta}>
+                            {opp.partner_name} · {dateStr}
+                          </Text>
+                        </View>
+                        <View style={styles.historyMatchPill}>
+                          <Text style={styles.historyMatchText}>{opp.match_percentage}%</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.historyCardDescription} numberOfLines={2}>
+                        {opp.description}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+        )}
       </ScrollView>
 
       {/* Add Signal Modal */}
@@ -1033,5 +1147,87 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#343A40',
     textAlign: 'center',
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#430C3D',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  historyHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  historyFolderIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  historyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  historySubtitle: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.75)',
+    marginTop: 2,
+  },
+  historyBody: {
+    padding: 16,
+    gap: 10,
+  },
+  historyCard: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 10,
+    padding: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#B52EFF',
+  },
+  historyCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 4,
+  },
+  historyDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#B52EFF',
+  },
+  historyCardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#343A40',
+  },
+  historyCardMeta: {
+    fontSize: 11,
+    color: '#6C757D',
+    marginTop: 1,
+  },
+  historyMatchPill: {
+    backgroundColor: '#B52EFF',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  historyMatchText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  historyCardDescription: {
+    fontSize: 12,
+    color: '#6C757D',
+    lineHeight: 16,
+    marginTop: 4,
   },
 });
