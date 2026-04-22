@@ -154,7 +154,7 @@ export default function ContactsScreen() {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.logoIcon}>
-            <Ionicons name="git-network" size={24} color="#00C880" />
+            <Ionicons name="git-network" size={24} color="#950574" />
           </View>
           <View>
             <Text style={styles.headerTitle}>Earna Flow</Text>
@@ -170,21 +170,25 @@ export default function ContactsScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Panel Header with Gradient */}
-      <LinearGradient
-        colors={['#4200FF', '#8C54FF']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.panelHeader}
-      >
-        <View style={styles.panelHeaderIcon}>
-          <Ionicons name="people" size={18} color="#FFFFFF" />
+      {/* Panel Header */}
+      <View style={styles.panelHeader}>
+        <View style={styles.panelHeaderLeft}>
+          <View style={styles.panelHeaderIcon}>
+            <Ionicons name="people" size={18} color="#FFFFFF" />
+          </View>
+          <View>
+            <Text style={styles.panelTitle}>Contacts</Text>
+            <Text style={styles.panelSubtitle}>Select a contact to analyze</Text>
+          </View>
         </View>
-        <View>
-          <Text style={styles.panelTitle}>Contacts</Text>
-          <Text style={styles.panelSubtitle}>Select a contact to analyze</Text>
-        </View>
-      </LinearGradient>
+        <TouchableOpacity
+          testID="add-contact-button"
+          style={styles.addContactButton}
+          onPress={() => {/* TODO: Add contact modal */}}
+        >
+          <Ionicons name="add" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
 
       {/* Contacts List */}
       {loading ? (
@@ -238,7 +242,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: 'rgba(0, 200, 128, 0.1)',
+    backgroundColor: 'rgba(149, 5, 116, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -262,12 +266,26 @@ const styles = StyleSheet.create({
   panelHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'space-between',
     margin: 16,
     padding: 16,
     borderRadius: 12,
+    backgroundColor: '#430C3D',
+  },
+  panelHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   panelHeaderIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addContactButton: {
     width: 36,
     height: 36,
     borderRadius: 8,
@@ -349,7 +367,7 @@ const styles = StyleSheet.create({
   signalBadge: {
     marginTop: 12,
     alignSelf: 'flex-start',
-    backgroundColor: '#80FFAD',
+    backgroundColor: '#F8D7F0',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 4,
@@ -357,7 +375,7 @@ const styles = StyleSheet.create({
   signalBadgeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#059669',
+    color: '#950574',
   },
   emptyState: {
     flex: 1,
@@ -391,7 +409,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#00C880',
+    backgroundColor: '#950574',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
