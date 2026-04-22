@@ -255,6 +255,8 @@ export default function ContactsScreen() {
         { is_archived: targetArchived },
         { headers: { Authorization: `Bearer ${storedToken}` } }
       );
+      // Re-fetch to guarantee we're in sync with backend (honours showArchived flag)
+      fetchContacts();
     } catch (error) {
       console.log('Error toggling archive:', error);
       setContacts(previous);
