@@ -343,7 +343,7 @@ Based on these signals, identify 1-2 referral opportunities. For each opportunit
 1. Suggest a partner type (e.g., Mortgage Broker, Insurance Adviser, Accountant, Real Estate Agent)
 2. Provide a match percentage (75-95%)
 3. Give a brief description (1 sentence max)
-4. List 2-3 SHORT bullet points of AI reasoning (5-8 words each)
+4. List EXACTLY 3 ai_reasoning bullet points. Each bullet MUST be a maximum of 4 words (very concise punchy phrases, no full sentences)
 
 Respond in this exact JSON format:
 {{
@@ -354,7 +354,7 @@ Respond in this exact JSON format:
       "match_percentage": 92,
       "partner_name": "Partner Company Name",
       "triggered_by": "Signal that triggered this",
-      "ai_reasoning": ["Short reason 1", "Short reason 2"]
+      "ai_reasoning": ["Max 4 words", "Max 4 words", "Max 4 words"]
     }}
   ]
 }}
@@ -433,6 +433,18 @@ Only respond with valid JSON, no other text."""
 async def get_opportunities(contact_id: str, request: Request):
     user = await get_current_user(request)
     opportunities = await db.opportunities.find({"contact_id": contact_id, "user_id": user["id"]}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    # Enforce: max 3 reasoning bullets, each max 4 words
+    import re
+    for opp in opportunities:
+        reasoning = opp.get("ai_reasoning", []) or []
+        trimmed = []
+        for r in reasoning[:3]:
+            words = str(r).split()
+            phrase = " ".join(words[:4])
+            # Remove trailing punctuation like ; , : . — -
+            phrase = re.sub(r"[;,:.\-\u2014\u2013]+$", "", phrase).strip()
+            trimmed.append(phrase)
+        opp["ai_reasoning"] = trimmed
     return opportunities
 
 # ============= SEED DATA ENDPOINT =============
