@@ -427,6 +427,7 @@ export default function ContactsScreen() {
             Sort: {sortMode === 'az' ? 'A–Z' : sortMode === 'za' ? 'Z–A' : 'Most signals'}
           </Text>
         </TouchableOpacity>
+        <View style={{ flex: 1 }} />
         <TouchableOpacity
           testID="show-archived-toggle"
           style={styles.archivedToggle}
@@ -1175,7 +1176,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   contactCardArchived: {
-    opacity: 0.55,
+    borderColor: '#CED4DA',
+    borderWidth: 1,
   },
   contactNameRow: {
     flexDirection: 'row',
@@ -1205,7 +1207,7 @@ const styles = StyleSheet.create({
   },
   toolbarRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 2,
