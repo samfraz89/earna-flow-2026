@@ -860,7 +860,7 @@ const styles = StyleSheet.create({
   triggeredBadge: {
     alignSelf: 'flex-start',
     maxWidth: '100%',
-    backgroundColor: '#00D664',
+    backgroundColor: '#B52EFF',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
