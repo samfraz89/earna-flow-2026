@@ -14,6 +14,7 @@ import uuid
 from datetime import datetime, timezone, timedelta
 import bcrypt
 import jwt
+import json
 import secrets
 
 # AI Integration
@@ -271,7 +272,85 @@ async def create_contact(contact_data: ContactCreate, request: Request):
         user_id=user["id"]
     )
     await db.contacts.insert_one(contact.dict())
-    return contact.dict()
+    # Asynchronously generate AI auto-signals for this contact (best-effort, non-blocking)
+    try:
+        await generate_auto_signals_for_contact(contact.dict(), user["id"])
+    except Exception as e:
+        logging.warning(f"Auto-signal generation failed for {contact.name}: {e}")
+    # Return fresh contact (with updated auto_signals_count)
+    fresh = await db.contacts.find_one({"id": contact.id, "user_id": user["id"]}, {"_id": 0})
+    return fresh or contact.dict()
+
+
+async def generate_auto_signals_for_contact(contact: dict, user_id: str):
+    """Use the LLM to generate 2-3 realistic auto-detected signals based on the contact's role/company/location."""
+    api_key = os.environ.get("EMERGENT_LLM_KEY")
+    if not api_key:
+        return
+    prompt = f"""You are an AI relationship intelligence engine detecting signals about a professional contact.
+
+Generate 2 to 3 realistic "auto-detected" signals that could plausibly have been picked up about this contact based on their profile.
+
+Contact:
+- Name: {contact.get('name')}
+- Role: {contact.get('role')}
+- Company: {contact.get('company')}
+- Location: {contact.get('location')}
+
+Each signal must belong to ONE of these categories (use the exact signal_type id):
+- meeting_recorded
+- life_event
+- property_activity
+- deal_activity
+- vehicle_purchase
+- business_event
+
+For each signal include:
+- signal_type: one of the ids above
+- sub_signal: a short specific tag (e.g., "Buying house", "Quote sent", "New baby", "Hiring staff")
+- title: "{{Category title}}: {{sub_signal}}" e.g. "Property Activity: Buying house"
+- description: ONE short sentence of plausible context (max 15 words)
+
+Return STRICTLY valid JSON in this exact format (no markdown, no extra text):
+{{
+  "signals": [
+    {{"signal_type": "...", "sub_signal": "...", "title": "...", "description": "..."}}
+  ]
+}}"""
+    chat = LlmChat(
+        api_key=api_key,
+        session_id=f"auto-signals-{contact.get('id')}",
+        system_message="You generate realistic contact activity signals in strict JSON."
+    ).with_model("openai", "gpt-5.2")
+    response = await chat.send_message(UserMessage(text=prompt))
+    # Parse
+    clean = response.strip()
+    if clean.startswith("```json"):
+        clean = clean[7:]
+    if clean.startswith("```"):
+        clean = clean[3:]
+    if clean.endswith("```"):
+        clean = clean[:-3]
+    data = json.loads(clean.strip())
+    sigs = data.get("signals", [])
+    inserted = 0
+    for s in sigs[:3]:
+        sig = Signal(
+            contact_id=contact["id"],
+            signal_type=s.get("signal_type", "meeting_recorded"),
+            title=s.get("title", "Signal"),
+            description=s.get("description", ""),
+            sub_signal=s.get("sub_signal"),
+            is_auto=True,
+            user_id=user_id,
+        )
+        await db.signals.insert_one(sig.dict())
+        inserted += 1
+    if inserted:
+        await db.contacts.update_one(
+            {"id": contact["id"], "user_id": user_id},
+            {"$inc": {"auto_signals_count": inserted}},
+        )
 
 
 @api_router.patch("/contacts/{contact_id}/archive")
